@@ -1,0 +1,23 @@
+body { padding-bottom: 3rem; }
+.table td { vertical-align: top; }
+.dt-container .dt-search input { min-width: 16rem; }
+.text-block { white-space: pre-wrap; }
+.cell-text { max-width: 60ch; }
+.clickable { cursor: pointer; }
+.contribution { margin-bottom: .6rem; line-height: 1.55; }
+.contribution .who { font-weight: 600; }
+.contribution:hover { background: var(--bs-tertiary-bg); border-radius: .25rem; }
+.contribution .edit-btn { visibility: hidden; }
+.contribution:hover .edit-btn { visibility: visible; }
+.point-summary { font-style: italic; color: var(--bs-secondary-color); }
+.diff-view { font-family: var(--bs-font-monospace); font-size: .82rem; white-space: pre-wrap; max-height: 60vh; overflow: auto; background: var(--bs-tertiary-bg); padding: .75rem; border-radius: .375rem; }
+.diff-view .add { background: rgba(25, 135, 84, .22); display: block; }
+.diff-view .del { background: rgba(220, 53, 69, .22); display: block; }
+.diff-view .hunk { color: var(--bs-info); display: block; }
+ins { background: rgba(25, 135, 84, .25); text-decoration: none; }
+del { background: rgba(220, 53, 69, .25); }
+textarea.code { font-family: var(--bs-font-monospace); font-size: .85rem; }
+.skill-list .list-group-item { cursor: pointer; }
+.sticky-panel { position: sticky; top: 1rem; }
+pre.io { max-height: 55vh; overflow: auto; white-space: pre-wrap; font-size: .8rem; background: var(--bs-tertiary-bg); padding: .5rem; border-radius: .375rem; }
+.ts { font-family: var(--bs-font-monospace); font-size: .8rem; color: var(--bs-secondary-color); }

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Skills · Transcraiber</title>
+  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/vendor/datatables-bs5/css/dataTables.bootstrap5.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid">
+  <h1 class="h4 mb-3">Skills</h1>
+  <div class="row g-3">
+    <div class="col-lg-3">
+      <div class="list-group skill-list" id="skill-list"></div>
+      <p class="small text-body-secondary mt-2">Skills in de pipeline worden als systeemprompt gebruikt, met de aangevinkte referenties eronder.
+        Elke wijziging maakt een nieuwe versie; elke run onthoudt welke versies gebruikt zijn.</p>
+    </div>
+    <div class="col-lg-9">
+      <!-- Promptvenster -->
+      <div class="card mb-3 border-primary">
+        <div class="card-header bg-primary-subtle"><i class="bi bi-chat-square-text"></i> <b>Skill-assistent</b> — verbeter een skill in gewone taal</div>
+        <div class="card-body">
+          <form id="f-assist" class="row g-2">
+            <div class="col-md-4"><label class="form-label small mb-0">Skill</label><select class="form-select form-select-sm" name="skill" id="assist-skill"></select></div>
+            <div class="col-md-5"><label class="form-label small mb-0">Model</label><input class="form-control form-control-sm" name="model" list="models-list" id="assist-model"></div>
+            <div class="col-md-3 d-flex align-items-end"><div class="form-check">
+              <input class="form-check-input" type="checkbox" name="includeCorrections" id="assist-corr">
+              <label class="form-check-label small" for="assist-corr">Onverwerkte correcties meenemen (<span id="corr-count">0</span>)</label></div></div>
+            <div class="col-12"><textarea class="form-control" name="instruction" rows="3"
+              placeholder="bv. 'Als iemand zegt &quot;dank u, schepen&quot; zonder naam en het onderwerp is sport, wijs dan Van Braeckevelt toe met zekerheid middel.' of 'Laat de cleaner Vlaamse tussenwerpsels zoals allez en hé altijd staan.'"></textarea></div>
+            <div class="col-12 d-flex gap-2 align-items-center">
+              <button class="btn btn-primary" id="btn-propose"><i class="bi bi-magic"></i> Genereer voorstel</button>
+              <span class="small text-body-secondary" id="assist-sel"></span>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Editor -->
+      <div class="card">
+        <div class="card-header d-flex align-items-center gap-2">
+          <b id="ed-title" class="me-auto">Kies een skill</b>
+          <span class="badge text-bg-secondary" id="ed-version"></span>
+          <a class="btn btn-sm btn-outline-secondary" id="ed-download"><i class="bi bi-download"></i> .md</a>
+        </div>
+        <div class="card-body">
+          <ul class="nav nav-tabs mb-2">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#t-edit">Bewerken</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-versions">Versies</button></li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane fade show active" id="t-edit">
+              <div class="mb-2"><span class="small fw-semibold me-2">Referenties:</span><span id="ed-refs"></span></div>
+              <textarea class="form-control code" id="ed-content" rows="26" spellcheck="false"></textarea>
+              <div class="d-flex gap-2 mt-2">
+                <input class="form-control form-control-sm" id="ed-note" placeholder="Wat heb je veranderd? (optioneel)">
+                <button class="btn btn-primary btn-sm text-nowrap" id="ed-save"><i class="bi bi-save"></i> Opslaan als nieuwe versie</button>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="t-versions">
+              <table id="versions" class="table table-sm table-hover w-100">
+                <thead><tr><th>Versie</th><th>Wanneer</th><th>Door</th><th>Opmerking</th><th></th></tr></thead>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="h5 mt-4">Correcties uit de output</h2>
+  <p class="small text-body-secondary">Elke aanpassing die je in een resultaat maakt, komt hier. Selecteer correcties en laat de skill-assistent er een skillverbetering van maken,
+    of markeer ze als verwerkt.</p>
+  <div class="mb-2 d-flex gap-2">
+    <button class="btn btn-sm btn-outline-primary" id="corr-use" disabled><i class="bi bi-magic"></i> Gebruik selectie in skill-assistent</button>
+    <button class="btn btn-sm btn-outline-secondary" id="corr-done" disabled><i class="bi bi-check2"></i> Markeer als verwerkt</button>
+  </div>
+  <table id="corrections" class="table table-sm table-hover w-100">
+    <thead><tr><th></th><th>Datum</th><th>Vergadering</th><th>Blok</th><th>Veld</th><th>Wijziging</th><th>Uitleg</th><th>Geleerd</th><th>Status</th><th></th></tr></thead>
+  </table>
+</div>
+
+<!-- Voorstel -->
+<div class="modal fade" id="m-proposal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Voorstel voor <span id="p-skill"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="alert alert-info py-2" id="p-summary"></div>
+        <div id="p-terms"></div>
+        <h6>Wijzigingen</h6>
+        <div class="diff-view" id="p-diff"></div>
+        <details class="mt-2"><summary class="small">Volledige voorgestelde tekst (aanpasbaar vóór toepassen)</summary>
+          <textarea class="form-control code mt-2" id="p-content" rows="20" spellcheck="false"></textarea></details>
+        <input class="form-control form-control-sm mt-2" id="p-note" placeholder="Opmerking bij deze versie">
+      </div>
+      <div class="modal-footer">
+        <span class="small text-body-secondary me-auto" id="p-cost"></span>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Verwerpen</button>
+        <button type="button" class="btn btn-success" id="p-apply"><i class="bi bi-check2-circle"></i> Toepassen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Versie-diff -->
+<div class="modal fade" id="m-version" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Versie <span id="v-num"></span> → huidige versie</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body"><div class="diff-view" id="v-diff"></div></div>
+      <div class="modal-footer"><button class="btn btn-warning" id="v-restore"><i class="bi bi-clock-history"></i> Deze versie terugzetten</button></div>
+    </div>
+  </div>
+</div>
+
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/vendor/datatables/dataTables.min.js"></script>
+<script src="/vendor/datatables-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/skills.js"></script>
+</body>
+</html>

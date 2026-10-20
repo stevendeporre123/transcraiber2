@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vergelijken · Transcraiber</title>
+  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/vendor/datatables-bs5/css/dataTables.bootstrap5.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid">
+  <h1 class="h4 mb-3">Runs vergelijken</h1>
+  <div class="row g-3 mb-3" id="cmp-head"></div>
+  <div class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" id="only-speaker">
+    <label class="form-check-label" for="only-speaker">Enkel verschillen in spreker</label>
+  </div>
+  <table id="cmp" class="table table-sm w-100">
+    <thead><tr><th>Blok</th><th>Spreker A</th><th>Spreker B</th><th>Tekstverschil (<del>A</del> → <ins>B</ins>)</th></tr></thead>
+  </table>
+</div>
+
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/vendor/datatables/dataTables.min.js"></script>
+<script src="/vendor/datatables-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/vergelijk.js"></script>
+</body>
+</html>

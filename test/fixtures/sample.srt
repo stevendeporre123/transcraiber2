@@ -1,0 +1,11 @@
+1
+00:00:01,000 --> 00:00:04,000
+Spreker 1: Goedenavond collega's, ik open de zitting.
+
+2
+00:00:04,000 --> 00:00:07,500
+Het eerste punt gaat over de begroting.
+
+3
+00:00:08,000 --> 00:00:11,000
+Spreker 2: Dank u voorzitter, ik heb een vraag.

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resultaat · Transcraiber</title>
+  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/vendor/datatables-bs5/css/dataTables.bootstrap5.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid">
+  <div class="d-flex flex-wrap gap-2 align-items-start mb-2">
+    <div class="me-auto">
+      <h1 class="h4 mb-0" id="r-title">…</h1>
+      <div class="small text-body-secondary" id="r-meta"></div>
+    </div>
+    <div class="btn-group">
+      <a class="btn btn-outline-primary" id="exp-pdf"><i class="bi bi-filetype-pdf"></i> PDF</a>
+      <a class="btn btn-outline-primary" id="exp-docx"><i class="bi bi-filetype-docx"></i> DOCX</a>
+      <a class="btn btn-outline-primary" id="exp-vtt"><i class="bi bi-badge-cc"></i> VTT</a>
+      <a class="btn btn-outline-secondary" id="exp-json"><i class="bi bi-filetype-json"></i></a>
+    </div>
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-arrow-counterclockwise"></i> Opnieuw</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item redo" data-step="normalizer" href="#">Vanaf normalizer (alles)</a></li>
+        <li><a class="dropdown-item redo" data-step="resolver" href="#">Vanaf speaker resolver</a></li>
+        <li><a class="dropdown-item redo" data-step="writer" href="#">Enkel verslag writer</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" id="resume" href="#">Hervatten (na fout)</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="r-status" class="mb-2"></div>
+  <div id="r-warnings"></div>
+
+  <ul class="nav nav-tabs mt-2" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#t-report">Verslag</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-blocks">Blokken</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-agenda">Agenda</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-steps">Stappen &amp; kosten</button></li>
+  </ul>
+  <div class="tab-content border border-top-0 rounded-bottom p-3">
+    <div class="tab-pane fade show active" id="t-report">
+      <div class="d-flex justify-content-end mb-2">
+        <button class="btn btn-sm btn-outline-secondary" id="btn-edit-report"><i class="bi bi-pencil"></i> Titel en samenvatting</button>
+      </div>
+      <div id="report" class="mx-auto" style="max-width: 900px"></div>
+    </div>
+    <div class="tab-pane fade" id="t-blocks">
+      <table id="blocks" class="table table-sm table-hover w-100">
+        <thead><tr><th>Blok</th><th>Tijd</th><th>Spreker</th><th>Zekerheid</th><th>Punt</th><th>Tekst</th><th></th></tr></thead>
+      </table>
+    </div>
+    <div class="tab-pane fade" id="t-agenda"><div id="agenda"></div></div>
+    <div class="tab-pane fade" id="t-steps">
+      <table id="steps" class="table table-sm table-hover w-100">
+        <thead><tr><th>Stap</th><th>Deel</th><th>Model</th><th>Status</th><th>Tokens in/uit</th><th>Kost</th><th>Tijd</th><th>Opmerkingen</th></tr></thead>
+      </table>
+      <div class="small text-body-secondary" id="skillversions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Blok bewerken + leren -->
+<div class="modal fade" id="m-block" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <form class="modal-content" id="f-block">
+      <div class="modal-header"><h5 class="modal-title">Blok <span id="b-id"></span> <small class="ts" id="b-time"></small></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-2">
+          <div class="col-md-4"><label class="form-label">Spreker</label>
+            <input class="form-control" name="speaker_name" list="speaker-list" autocomplete="off"><datalist id="speaker-list"></datalist></div>
+          <div class="col-md-2"><label class="form-label">Fractie</label><input class="form-control" name="fractie" list="fractie-list"><datalist id="fractie-list"></datalist></div>
+          <div class="col-md-2"><label class="form-label">Functie</label>
+            <input class="form-control" name="functie" list="functie-list"><datalist id="functie-list">
+              <option value="raadslid"><option value="schepen"><option value="burgemeester"><option value="voorzitter"><option value="ondervoorzitter"><option value="algemeen directeur">
+            </datalist></div>
+          <div class="col-md-4"><label class="form-label">Agendapunt</label><select class="form-select" name="point_idx"></select></div>
+          <div class="col-12">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="applyAll" id="b-applyall">
+              <label class="form-check-label" for="b-applyall">Sprekerwijziging toepassen op alle blokken van <b id="b-oldspeaker"></b> in deze run</label></div>
+          </div>
+          <div class="col-12"><label class="form-label">Tekst</label>
+            <textarea class="form-control" name="text_final" rows="8"></textarea></div>
+          <div class="col-12">
+            <details><summary class="small">Tussenstappen (origineel → genormaliseerd → opgeschoond)</summary>
+              <div class="small mt-2"><b>Origineel</b> <span class="ts" id="b-rawspk"></span><div class="text-block" id="b-raw"></div>
+              <b class="d-block mt-2">Normalizer</b><div class="text-block" id="b-norm"></div>
+              <b class="d-block mt-2">Cleaner</b><div class="text-block" id="b-clean"></div></div>
+            </details>
+          </div>
+        </div>
+        <hr>
+        <h6><i class="bi bi-mortarboard"></i> Leren uit deze correctie</h6>
+        <p class="small text-body-secondary mb-2">Elke wijziging wordt bewaard als correctie. Vink vervangingen aan om ze meteen als term in de Gentse context op te nemen;
+          algemene lessen verwerk je later via de skill-assistent (Skills-pagina).</p>
+        <div id="b-learn" class="mb-2"><div class="small text-body-secondary">Pas de tekst aan om vervangingen te zien.</div></div>
+        <label class="form-label small">Uitleg voor de skills (optioneel)</label>
+        <textarea class="form-control form-control-sm" name="lesson" rows="2" placeholder="bv. 'mijnheer de schepen' bij een vraag over sport is altijd Van Braeckevelt"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Opslaan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Verslag: titel/samenvatting -->
+<div class="modal fade" id="m-report" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form class="modal-content" id="f-report">
+      <div class="modal-header"><h5 class="modal-title">Verslag bewerken</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <label class="form-label">Titel</label><input class="form-control mb-2" name="titel">
+        <label class="form-label">Samenvatting</label><textarea class="form-control mb-2" name="samenvatting" rows="5"></textarea>
+        <label class="form-label">Waarschuwingen (één per regel)</label><textarea class="form-control" name="waarschuwingen" rows="3"></textarea>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button><button class="btn btn-primary">Opslaan</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Agendapunt in verslag -->
+<div class="modal fade" id="m-point" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form class="modal-content" id="f-point">
+      <div class="modal-header"><h5 class="modal-title">Punt bewerken</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row g-2">
+        <input type="hidden" name="idx">
+        <div class="col-md-3"><label class="form-label">Nummer</label><input class="form-control" name="nummer"></div>
+        <div class="col-md-9"><label class="form-label">Titel</label><input class="form-control" name="titel"></div>
+        <div class="col-12"><label class="form-label">Samenvatting</label><textarea class="form-control" name="samenvatting" rows="3"></textarea></div>
+        <div class="col-12"><label class="form-label">Beslissingen (één per regel)</label><textarea class="form-control" name="beslissingen" rows="3"></textarea></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button><button class="btn btn-primary">Opslaan</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Stapdetail -->
+<div class="modal fade" id="m-step" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="s-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body"><div class="row">
+        <div class="col-lg-6"><h6>Invoer (gebruikersbericht)</h6><pre class="io" id="s-in"></pre></div>
+        <div class="col-lg-6"><h6>Uitvoer model</h6><pre class="io" id="s-out"></pre></div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/vendor/datatables/dataTables.min.js"></script>
+<script src="/vendor/datatables-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/run.js"></script>
+</body>
+</html>

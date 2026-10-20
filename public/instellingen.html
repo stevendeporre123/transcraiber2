@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Instellingen · Transcraiber</title>
+  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/vendor/datatables-bs5/css/dataTables.bootstrap5.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="container" style="max-width: 900px">
+  <h1 class="h4 mb-3">Instellingen</h1>
+  <form id="f-settings">
+    <div class="card mb-3"><div class="card-body">
+      <h2 class="h6">OpenRouter</h2>
+      <div id="key-status" class="small mb-2"></div>
+      <div class="input-group">
+        <input type="password" class="form-control" name="openrouter_api_key" placeholder="sk-or-v1-…" autocomplete="off">
+        <button type="button" class="btn btn-outline-danger" id="clear-key">Wissen</button>
+      </div>
+      <div class="form-text">Wordt bewaard in de lokale SQLite-databank. Een <code>OPENROUTER_API_KEY</code> in <code>.env</code> heeft voorrang.</div>
+    </div></div>
+
+    <div class="card mb-3"><div class="card-body">
+      <h2 class="h6">Standaardmodellen</h2>
+      <p class="small text-body-secondary">Typ of kies een OpenRouter-model-ID (prijzen in $ per miljoen tokens in/uit). Leeg per stap = het algemene standaardmodel.
+        Per run kan je dit nog overschrijven, zodat je modellen kan vergelijken.</p>
+      <div class="row g-2" id="model-fields"></div>
+    </div></div>
+
+    <div class="card mb-3"><div class="card-body row g-2">
+      <h2 class="h6">Verwerking</h2>
+      <div class="col-md-3"><label class="form-label">Temperatuur</label><input type="number" step="0.05" min="0" max="1" class="form-control" name="temperature" placeholder="0.1"></div>
+      <div class="col-md-3"><label class="form-label">Woorden per deel</label><input type="number" step="100" min="300" class="form-control" name="chunk_words" placeholder="2000"></div>
+      <div class="col-md-3"><label class="form-label">Parallelle delen</label><input type="number" min="1" max="10" class="form-control" name="concurrency" placeholder="3"></div>
+      <div class="col-md-3"><label class="form-label">Timeout (s)</label><input type="number" min="30" class="form-control" name="timeout_s" placeholder="600"></div>
+      <div class="col-12"><div class="form-check">
+        <input type="checkbox" class="form-check-input" id="harvest" name="harvest_normalizer" checked>
+        <label class="form-check-label" for="harvest">Nieuwe vervormingen uit de normalizer automatisch als voorstel in de Gentse context zetten</label></div></div>
+    </div></div>
+    <button class="btn btn-primary"><i class="bi bi-save"></i> Opslaan</button>
+  </form>
+</div>
+
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/vendor/datatables/dataTables.min.js"></script>
+<script src="/vendor/datatables-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/instellingen.js"></script>
+</body>
+</html>

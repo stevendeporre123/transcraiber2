@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transcripties · Transcraiber</title>
+  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/vendor/datatables-bs5/css/dataTables.bootstrap5.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid">
+  <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    <h1 class="h4 mb-0 me-auto">Transcripties</h1>
+    <button class="btn btn-outline-secondary" id="btn-compare" disabled><i class="bi bi-layout-split"></i> Vergelijk 2 runs</button>
+    <button class="btn btn-primary" id="btn-new"><i class="bi bi-upload"></i> Nieuwe transcriptie</button>
+  </div>
+  <table id="runs" class="table table-sm table-hover w-100">
+    <thead><tr>
+      <th></th><th>#</th><th>Vergadering</th><th>Bestand</th><th>Modellen</th><th>Status</th><th>Blokken</th><th>Kost</th><th>Aangemaakt</th><th></th>
+    </tr></thead>
+  </table>
+</div>
+
+<!-- Nieuwe transcriptie -->
+<div class="modal fade" id="m-new" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <form class="modal-content" id="f-new">
+      <div class="modal-header"><h5 class="modal-title">Nieuwe transcriptie verbeteren</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Transcript <span class="text-danger">*</span></label>
+            <input type="file" class="form-control" name="transcript" accept=".pdf,.docx,.vtt,.srt,.txt" required>
+            <div class="form-text" id="tc-hint">PDF, DOCX, VTT of SRT. VTT-uitvoer kan enkel bij VTT/SRT-invoer.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Agenda (optioneel)</label>
+            <input type="file" class="form-control" name="agenda" accept=".pdf,.docx,.txt">
+            <div class="form-text">Wordt uitgelezen tot agendapunten + nieuwe context (als voorstel).</div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Orgaan</label>
+            <select class="form-select" name="orgaan">
+              <option value="gemeenteraad">Gemeenteraad</option>
+              <option value="commissie">Commissie</option>
+            </select>
+          </div>
+          <div class="col-md-4 commissie-only d-none">
+            <label class="form-label">Commissie</label>
+            <input class="form-control" name="commissie" list="commissie-list" placeholder="VOGOK, MASSE, …">
+            <datalist id="commissie-list"></datalist>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Datum</label>
+            <input type="date" class="form-control" name="datum">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Voorzitter van deze vergadering</label>
+            <input class="form-control" name="voorzitter" list="leden-list" placeholder="leeg = standaardregel uit de skill">
+            <datalist id="leden-list"></datalist>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Titel (optioneel)</label>
+            <input class="form-control" name="titel" placeholder="bv. Gemeenteraad 23 maart 2026">
+          </div>
+        </div>
+        <hr>
+        <div id="run-options"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-play-fill"></i> Opladen en verwerken</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Opnieuw verwerken (ander model / nieuwe skillversie) -->
+<div class="modal fade" id="m-rerun" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form class="modal-content" id="f-rerun">
+      <div class="modal-header"><h5 class="modal-title">Opnieuw verwerken</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <p class="text-body-secondary small">Maakt een nieuwe run voor dezelfde vergadering. Ideaal om modellen of skillversies te vergelijken.</p>
+        <input type="hidden" name="meeting_id">
+        <div id="rerun-options"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-play-fill"></i> Start</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/vendor/datatables/dataTables.min.js"></script>
+<script src="/vendor/datatables-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/index.js"></script>
+</body>
+</html>

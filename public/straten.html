@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Straten · Transcraiber</title>
+  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/vendor/datatables-bs5/css/dataTables.bootstrap5.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid">
+  <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    <h1 class="h4 mb-0 me-auto">Stratenlijst Gent</h1>
+    <a class="btn btn-outline-secondary btn-sm" href="/api/references/stratenlijst.md"><i class="bi bi-download"></i> stratenlijst.md</a>
+    <button class="btn btn-primary" id="new-street"><i class="bi bi-plus-lg"></i> Nieuwe straat</button>
+  </div>
+  <p class="small text-body-secondary">Per deel van de transcriptie stuurt de tool enkel de straten mee die op woorden in de tekst lijken (ook bij STT-vervormingen),
+    zodat de normalizer de officiële schrijfwijze kent zonder telkens de hele lijst te moeten lezen.</p>
+  <table id="streets" class="table table-sm table-hover w-100">
+    <thead><tr><th>Straatnaam</th><th>Deelgemeente</th></tr></thead>
+  </table>
+</div>
+
+<div class="modal fade" id="m-street" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" id="f-street">
+      <div class="modal-header"><h5 class="modal-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <label class="form-label">Straatnaam *</label><input class="form-control mb-2" name="naam" required>
+        <label class="form-label">Deelgemeente</label><input class="form-control" name="deelgemeente" list="deelgemeenten"><datalist id="deelgemeenten"></datalist>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-outline-danger me-auto btn-delete">Verwijderen</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button><button class="btn btn-primary">Opslaan</button></div>
+    </form>
+  </div>
+</div>
+
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/vendor/datatables/dataTables.min.js"></script>
+<script src="/vendor/datatables-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/straten.js"></script>
+</body>
+</html>

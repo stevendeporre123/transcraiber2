@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Raadsleden · Transcraiber</title>
+  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/vendor/datatables-bs5/css/dataTables.bootstrap5.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid">
+  <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    <h1 class="h4 mb-0 me-auto">Raadsleden, schepenen en bevoegdheden</h1>
+    <a class="btn btn-outline-secondary btn-sm" href="/api/references/leden.md"><i class="bi bi-download"></i> leden.md</a>
+    <a class="btn btn-outline-secondary btn-sm" href="/api/references/bevoegdheden.md"><i class="bi bi-download"></i> bevoegdheden.md</a>
+    <button class="btn btn-primary" id="new-member"><i class="bi bi-person-plus"></i> Nieuw lid</button>
+  </div>
+  <p class="small text-body-secondary">Deze lijst wordt als referentie <b>LEDEN</b> en <b>BEVOEGDHEDEN</b> meegestuurd naar de skills. Een lid dat de raad verlaat zet je op <i>inactief</i> (blijft bewaard, wordt niet meer meegestuurd).</p>
+  <table id="members" class="table table-sm table-hover w-100">
+    <thead><tr><th>Naam</th><th>Match-namen</th><th>G</th><th>Fractie</th><th>Functie</th><th>Bevoegdheden</th><th>Actief</th></tr></thead>
+  </table>
+
+  <div class="d-flex align-items-center mt-5 mb-2">
+    <h2 class="h5 mb-0 me-auto">Commissies</h2>
+    <button class="btn btn-outline-primary btn-sm" id="new-comm"><i class="bi bi-plus"></i> Nieuwe commissie</button>
+  </div>
+  <table id="comms" class="table table-sm table-hover w-100">
+    <thead><tr><th>Code</th><th>Naam</th><th>Relevante schepenen</th><th>Voorzitter</th></tr></thead>
+  </table>
+</div>
+
+<div class="modal fade" id="m-member" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form class="modal-content" id="f-member">
+      <div class="modal-header"><h5 class="modal-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row g-2">
+        <div class="col-md-6"><label class="form-label">Volledige naam *</label><input class="form-control" name="naam" required></div>
+        <div class="col-md-6"><label class="form-label">Match-namen</label><input class="form-control" name="match_namen" placeholder="Van den Bossche / Bossche">
+          <div class="form-text">Achternaamvarianten voor aanspreekvormen, gescheiden door /</div></div>
+        <div class="col-md-2"><label class="form-label">Geslacht</label><select class="form-select" name="geslacht"><option value="">?</option><option>M</option><option>V</option><option>X</option></select></div>
+        <div class="col-md-4"><label class="form-label">Fractie</label><input class="form-control" name="fractie" list="fracties"><datalist id="fracties"></datalist></div>
+        <div class="col-md-3"><label class="form-label">Functie</label>
+          <select class="form-select" name="functie"><option>raadslid</option><option>schepen</option><option>burgemeester</option><option>voorzitter</option><option>ondervoorzitter</option></select></div>
+        <div class="col-md-3"><label class="form-label">Aanspreekvorm</label><input class="form-control" name="aanspreekvorm" placeholder="mijnheer de burgemeester"></div>
+        <div class="col-12"><label class="form-label">Bevoegdheden (portefeuille)</label><input class="form-control" name="portefeuille" placeholder="enkel voor schepenen/burgemeester"></div>
+        <div class="col-12"><label class="form-label">Trefwoorden (onderwerpen)</label><textarea class="form-control" name="trefwoorden" rows="2" placeholder="sluikstort, netheid, afval; economie, handel"></textarea>
+          <div class="form-text">Gebruikt door speaker-resolver om "mijnheer/mevrouw de schepen" te koppelen.</div></div>
+        <div class="col-12"><label class="form-label">Opmerking</label><input class="form-control" name="notitie"></div>
+        <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" name="actief" id="mb-actief" checked><label class="form-check-label" for="mb-actief">Actief (meesturen naar de skills)</label></div></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-outline-danger me-auto btn-delete">Verwijderen</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button><button class="btn btn-primary">Opslaan</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="m-comm" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" id="f-comm">
+      <div class="modal-header"><h5 class="modal-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <label class="form-label">Code *</label><input class="form-control mb-2" name="code" required placeholder="VOGOK">
+        <label class="form-label">Volledige naam</label><input class="form-control mb-2" name="naam">
+        <label class="form-label">Relevante schepenen</label><input class="form-control mb-2" name="schepenen">
+        <label class="form-label">Voorzitter</label><input class="form-control" name="voorzitter" list="leden-names"><datalist id="leden-names"></datalist>
+        <div class="form-text">Wordt voorgesteld als voorzitter bij een commissievergadering.</div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-outline-danger me-auto btn-delete">Verwijderen</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button><button class="btn btn-primary">Opslaan</button></div>
+    </form>
+  </div>
+</div>
+
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/vendor/datatables/dataTables.min.js"></script>
+<script src="/vendor/datatables-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/leden.js"></script>
+</body>
+</html>

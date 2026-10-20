@@ -1,0 +1,3012 @@
+# Stratenlijst Gent — alle deelgemeenten
+
+Totaal: 2904 unieke straatnamen
+Bron: officiële stratenlijst stad Gent
+
+Gebruik dit bestand in vtt-normalizer om STT-vervormingen van straatnamen
+te herkennen en te corrigeren naar de officiële schrijfwijze.
+
+## Straatnamen per deelgemeente
+
+### Desteldonk
+
+- Adrien de Gerlachestraat
+- Belgicastraat
+- Bieskensstraat
+- Bragistraat
+- Busstraat
+- Desteldonkdorp
+- Desteldonkstraat
+- Eddastraat
+- Energiestraat
+- Eversdonk
+- Fritiof Nilsson Piratenstraat
+- Keurestraat
+- Koemeersstraat
+- Lichterveldestraat
+- Lindestraat
+- Lochtingstraat
+- Mai Zetterlingstraat
+- Mispelstraat
+- Moervaartkaai
+- Moleneinde
+- Nokerstraat
+- Oudemolenstraat
+- Oudetragel
+- Putteveldestraat
+- Rechtstraat
+- Rodenhuizekaai
+- Rostijnestraat
+- Sagastraat
+- Selma Lagerlöfstraat
+- Skaldenstraat
+- Speurdonkstraat
+
+### Drongen
+
+- Abdijmolenstraat
+- Adolf Lootensstraat
+- Adolf Petitstraat
+- Adriaan Walckiersdreef
+- Afsneesedijkweg
+- Akkerwindelaan
+- Alfons Bynlaan
+- Antoon Catriestraat
+- Asfilstraat
+- Asselsekerkweg
+- Asselsstraat
+- Avennesdreef
+- Baarleboslaan
+- Baarledorpstraat
+- Baarlekouter
+- Baarleveer
+- Baarleveldestraat
+- Baarlewarande
+- Bassebeekstraat
+- Bassebeekwegel
+- Beekstraat
+- Beekstraatkouter
+- Bernard Hamelinckstraat
+- Bieldekensstraat
+- Binnenring-Drongen
+- Blauwpoortstraat
+- Blekebruidpad
+- Boelenaar
+- Bollewerkstraat
+- Booiebos
+- Boonstede
+- Bosbulkpad
+- Boskeetstraat
+- Bosstraat
+- Brouwerijstraat
+- Brouwersgracht
+- Bruidstraat
+- Buisstraat
+- Buitenring-Drongen
+- Chartreuzengoed
+- Congregatiestraat
+- Dammeerspad
+- De Kemmeterlaan
+- Deinse Horsweg
+- Deinsesteenweg
+- Dijkweg
+- Domien Ingelsstraat
+- Doornplasstraat
+- Dosweg
+- Dovenetelstraat
+- Drabbinkdreef
+- Drieleienstraat
+- Drongenplein
+- Drongenstationstraat
+- Droogveldeweg
+- Eikvarenweg
+- Elshout
+- Elshoutpad
+- Ernest Solvynsdreef
+- Flonkedreef
+- Fresiastraat
+- Ganzerikpad
+- Ganzerikstraat
+- Gapaardkouter
+- Gaspeldoorndreef
+- Gaspeldoornweg
+- Gavergrachtpad
+- Gavergrachtstraat
+- Gaverlandstraat
+- Gijzelstraat
+- Goubaulaan
+- Groenewandeling
+- Halewijnkouter
+- Halewijnmolenpad
+- Halewijnstationstraat
+- Halewijnstraat
+- Hazestropdreef
+- Heiebreestraat
+- Heilighuisdreef
+- Hellewee
+- Henri de Sagherstraat
+- Hindestraat
+- Hof van Eden
+- Hoge Bilk
+- Hoge Lakendreef
+- Holisstraat
+- Hoogland
+- Hoogmeers
+- Industriepark-Drongen
+- Jaagpad
+- Jan-Baptist Lombaertdreef
+- Jean Fobelaan
+- Jean-Baptiste d'Hanedreef
+- Joannes Schinckdreef
+- Jozef Boddaertstraat
+- Jozef de Graevestraat
+- Kaaksmetestraat
+- Kapelakker
+- Kapelanijmeers
+- Kapoenenpleintje
+- Karel De Bondtlaan
+- Kasteleinstraat
+- Kattegaver
+- Keiskantstraat
+- Keuze
+- Keuzekouter
+- Keuzemeers
+- Kijfmeers
+- Klaphof
+- Klauwerspad
+- Klaverdries
+- Kloosterstraat
+- Koepad
+- Koninginnelaan
+- Koningsvarenweg
+- Kouterkenpad
+- Kraaiaard
+- Krommehamlaan
+- Kromveldestraat
+- Kroonprinsstraat
+- Kroosvarenweg
+- Kruisstraat
+- Lage Lakendreef
+- Lage Varenweg
+- Lammeken
+- Landegemstraat
+- Landgoed De Campagne
+- Lazariepad
+- Leegte
+- Leeuwenhof
+- Leisbulkstraat
+- Luchterenhof
+- Luchterenkerkweg
+- Luchterenkouter
+- Luchterenstraat
+- Manestraat
+- Mariakerksesteenweg
+- Meekrapstraat
+- Meirebeekpad
+- Meirebeekstraat
+- Merendreesesteenweg
+- Meulenaarshoek
+- Meuleweg
+- Mijlsteen
+- Moerstraat
+- Moortelputstraat
+- Mosgaverstraat
+- Muinkhampad
+- Nevelseheerweg
+- Noordgijzelstraat
+- Noordhoutstraat
+- Novicenstraat
+- Oude Gentweg
+- Oude Lakenstraat
+- Oude-Abdijstraat
+- Oudekalepad
+- Oudenaardegoed
+- Oudewee
+- Paasleliedreef
+- Pachtgoeddreef
+- Paradijskouter
+- Petrus Christusdreef
+- Piereputstraat
+- Pieter Hellebautstraat
+- Poekstraat
+- Pontpad
+- Pontstraat
+- Prinsesselaan
+- Raapstraat
+- Rabouwstraat
+- Regina de Meersmandreef
+- Renpaardlaan
+- Rijkegasthuisbos
+- Rodehoedstraat
+- Romeins pad
+- Rondehuisjesdreef
+- Roomanstraat
+- Rozenlaan
+- Schepenstraat
+- Schuiterstraat
+- Sint-Aldegondestraat
+- Sint-Gerolfstraat
+- Sint-Mauruspad
+- Slindonk
+- Slingerstraat
+- Sneppenbrugstraat
+- Spiekerspad
+- Steenhuisdreef
+- Steenovenstraat
+- Streepbosstraat
+- Stroomkenskerkweg
+- Struisvarenweg
+- Ter Rivieren
+- Treinstraat
+- Triomfkasteelpad
+- Tuinstraat
+- Varendrieskouter
+- Varendriesstraat
+- Veerstraat
+- Vierhekkensstraat
+- Vierlinden
+- Vierlindenpad
+- Vinkendal
+- Viooltjesdreef
+- Vlaamse-Hefboomweg
+- Vontpad
+- Wafelijzerhoeve
+- Wallemeers
+- Waterviolier
+- Wederikstraat
+- Weegbreestraat
+- Weerdestraat
+- Welvaertslag
+- Wijkbosstraat
+- Wissaardspad
+- Zeger van Kortrijkstraat
+- Zestiengemeten
+- Zevenbladstraat
+- Zevengemeten
+- Zombeekstraat
+- Zwanenberg
+
+### Gent
+
+- 't Stuk
+- Aaigemstraat
+- Aambeeldstraat
+- Aan de Bocht
+- Abdisstraat
+- Abeelstraat
+- Abrahamstraat
+- Abrikoosstraat
+- Acaciapark
+- Acaciastraat
+- Academiestraat
+- Achilles Musschestraat
+- Achterdokkaai
+- Achterleie
+- Achtermuide
+- Achtervisserij
+- Achtmeiplein
+- Adalwinstraat
+- Afrikalaan
+- Agaatstraat
+- Ajuinlei
+- Akkerhage
+- Akkerstraat
+- Akselstraat
+- Albaststraat
+- Albatrosstraat
+- Albert Baertsoenkaai
+- Albert Schweitzerstraat
+- Albertina Sisulubrug
+- Alexianenplein
+- Alfred Vanderstegenlaan
+- Alice Béviairepad
+- Alkstraat
+- Aloïs Joosstraat
+- Alpacastraat
+- Alphonse Sifferdok
+- Alphonse Sifferlaan
+- Alphonse de Hollainhof
+- Amanda Foketstraat
+- Ambachtstraat
+- Ambassadeursweg
+- Ambroise Verschaffeltdreef
+- Amerikalaan
+- Anjelierstraat
+- Annonciadenstraat
+- Antoine Van Hoorebekehof
+- Antonius Triestlaan
+- Antoon Sanderusstraat
+- Antwerpenplein
+- Antwerpsesteenweg
+- Apostelhuizen
+- Apotheekstraat
+- Appelbrugparkje
+- Appelstraat
+- Arduinstraat
+- Arendstraat
+- Armand Heinsstraat
+- Arthur Verhaegenstraat
+- Assenedestraat
+- Atletiekplein
+- August Hausstraat
+- August Kekuléstraat
+- August Vermeylenstraat
+- Augustijn Moreelsstraat
+- Augustijnenkaai
+- Australiëstraat
+- Aziëstraat
+- Baaisteeg
+- Bachtenwalle
+- Bagattenstraat
+- Balenmagazijnstraat
+- Baliestraat
+- Ballenstraat
+- Balsamierenstraat
+- Bandelierstraat
+- Banierstraat
+- Bargiekaai
+- Barrestraat
+- Basaltstraat
+- Basseveldestraat
+- Bastionstraat
+- Bataviabrug
+- Batterijstraat
+- Baudelohof
+- Baudelokaai
+- Baudelostraat
+- Baviaanstraat
+- Beemdstraat
+- Begijnengracht
+- Begijnhofdries
+- Begijnhoflaan
+- Belfortstraat
+- Belgradostraat
+- Bellefleurstraat
+- Bellemansstraat
+- Belvédèreweg
+- Benedictijnenstraat
+- Beneluxplein
+- Bennesteeg
+- Berkhoutsheide
+- Bernard Montgomerydreef
+- Bernard Spaelaan
+- Bernard de Wildestraat
+- Bernmaaieplein
+- Bernmaaieweg
+- Berouw
+- Berthe Springaelstraat
+- Beukelaarstraat
+- Beukenlaan
+- Bevelandstraat
+- Bevergracht
+- Beverhoutplein
+- Bevrijdingslaan
+- Bezaanstraat
+- Bibliotheekstraat
+- Biekorfstraat
+- Biervlietstraat
+- Biezekapelstraat
+- Biezenstuk
+- Bij Sint-Jacobs
+- Bij Sint-Jozef
+- Bijgaardepark
+- Bijlokehof
+- Bijlokekaai
+- Bijlokestraat
+- Bijlokevest
+- Bijsterveldweg
+- Bijzeriggepark
+- Binnenring-Drongen
+- Binnenring-Sint-Denijs
+- Binnenring-Zwijnaarde
+- Bisdomkaai
+- Bisdomplein
+- Blaarmeersenbrug
+- Blaisantvest
+- Blandijnberg
+- Blankenbergestraat
+- Blazoenstraat
+- Blekerijstraat
+- Blekersdijk
+- Blijde-Inkomststraat
+- Blindeken
+- Boegbeeldstraat
+- Boekhoutestraat
+- Boeksteeg
+- Boekweitstraat
+- Boentweg
+- Boerderijstraat
+- Bomastraat
+- Bombaystraat
+- Bommelstraat
+- Bonifantenstraat
+- Bonteleeuwstraat
+- Boomstraat
+- Borkelaarstraat
+- Borreputsteeg
+- Botermarkt
+- Brabantdam
+- Braderijstraat
+- Brandstraat
+- Brandweerstraat
+- Brankardierstraat
+- Breendonkstraat
+- Brioolstraat
+- Broederlijke-Weversplein
+- Bronsstraat
+- Bronstijdhof
+- Bronstijdweg
+- Brouwersstraat
+- Brughuizeken
+- Brugsepoortstraat
+- Brugsesteenweg
+- Brusselsepoortstraat
+- Buffelstraat
+- Buitenhof
+- Buitenring-Sint-Denijs
+- Buitenring-Wondelgem
+- Buitensingel
+- Buitenwalledoorgang
+- Buitenwallepad
+- Buitenwalleplein
+- Bunderweg
+- Burggravenlaan
+- Burgstraat
+- Calcuttabrug
+- Campinglaan
+- Canadastraat
+- Cantecleerstraat
+- Cargadoorstraat
+- Carneoolstraat
+- Casinoplein
+- Cataloniëstraat
+- Cederstraat
+- Charles Andrieslaan
+- Charles Van Lerbergheplein
+- Charles de Kerchovelaan
+- Charles de L'Epéeplein
+- Chinastraat
+- Chocoladesteeg
+- Chrysantstraat
+- Cirkelspark
+- Citadellaan
+- Citadelpark
+- Citroenstraat
+- Clarissenstraat
+- Clematisstraat
+- Cliviastraat
+- Conduitsteeg
+- Congreslaan
+- Constant Dosscheweg
+- Constant Montaldplein
+- Contributiestraat
+- Corbiestraat
+- Corduwaniersstraat
+- Corneel Heymanslaan
+- Cornelis Sneyssonestraat
+- Coupure
+- Coyendanspark
+- Creesersweg
+- Crocusstraat
+- Cyclamenstraat
+- Cyriel Buyssestraat
+- Dahliastraat
+- Dampoortstraat
+- Daniël Kinetstraat
+- Dapperheidstraat
+- David 't Kindtplein
+- De Pintelaan
+- Delori-Maeslaan
+- Denderlaan
+- Dendermondsesteenweg
+- Desiderius Erasmusstraat
+- Diamantstraat
+- Dierentuinlaan
+- Diksmuidestraat
+- Distelstraat
+- Dobbelslot
+- Dok-Noord
+- Dok-Zuid
+- Dokwerkerskaai
+- Domien de Waghemakerestraat
+- Donkersteeg
+- Doornsteeg
+- Doornzelestraat
+- Drabstraat
+- Dracenastraat
+- Drapierstraat
+- Driemasterstraat
+- Driepikkelstraat
+- Drietorekensstraat
+- Drongenhof
+- Drongensesteenweg
+- Druifstraat
+- Duifhuisstraat
+- Duiklaan
+- Duinkerkeplein
+- Duivelsteeg
+- Dukkeldamstraat
+- Durmeschipstraat
+- Dwight Eisenhowerlaan
+- Désiré Fiévéstraat
+- Désiré Van Monckhovenstraat
+- Ebergiste De Deynestraat
+- Edelsteenstraat
+- Edmond Boonenstraat
+- Edmond van Beverenplein
+- Edward Anseeleplein
+- Edward Pynaertkaai
+- Eedverbondkaai
+- Eekhout
+- Eendrachtstraat
+- Egelantierstraat
+- Eilanderskaai
+- Eilandstraat
+- Einde Were
+- Ekkergemstraat
+- Elfjulistraat
+- Elsstraat
+- Elyzeese Velden
+- Emile Braunplein
+- Emile Clauslaan
+- Emile Moysonlaan
+- Emilius Seghersplein
+- Engelbert van Arenbergstraat
+- Ericastraat
+- Erpelsteeg
+- Esplanade Oscar Van de Voorde
+- Estafetteweg
+- Eugène Felixdreef
+- Europalaan
+- Familie De Vignedreef
+- Familie Van Rysselberghedreef
+- Fazantstraat
+- Ferdinand Lousbergskaai
+- Ferdinand Lousbergspark
+- Fernand Scribedreef
+- Fibulahof
+- Fibulaplein
+- Filaturestraat
+- Filips de Goedekaai
+- Filips van Arteveldestraat
+- Filips van Cleeflaan
+- Filips van Marnixstraat
+- Firapeelpad
+- Fjordenstraat
+- Flamingostraat
+- Fleurusstraat
+- Florbertusstraat
+- Floridastraat
+- Fluweelstraat
+- Folke Bernadottestraat
+- Fonteineplein
+- Forelstraat
+- Fortlaan
+- Francisco Ferrerlaan
+- Frank Baurstraat
+- Franklin Rooseveltlaan
+- Frankrijkplein
+- Frans Ackermanstraat
+- Frans De Coenestraat
+- Frans Rensstraat
+- Frans Spaestraat
+- Frans Tavernierstraat
+- Frans de Potterstraat
+- Frans van Ryhovelaan
+- François Benardstraat
+- François Laurentplein
+- Fratersplein
+- Fregatstraat
+- Fritz De Beulestraat
+- Fuchsiastraat
+- Gaaipersstraat
+- Gaardenierspad
+- Gaardeniersweg
+- Gagelstraat
+- Galgenberg
+- Galglaan
+- Galvestonstraat
+- Gambrinusstraat
+- Gandastraat
+- Gangmakersstraat
+- Ganzendries
+- Garensteeg
+- Gasklokstraat
+- Gasmeterlaan
+- Gaspar de Craeyerstraat
+- Gebroeders De Cockstraat
+- Gebroeders De Smetstraat
+- Gebroeders Van Eyckstraat
+- Gebroeders Vandeveldestraat
+- Geeraard Van den Daelelaan
+- Geitstraat
+- Geldmunt
+- Gelukstraat
+- George Minneplein
+- Geraard Mercatorstraat
+- Geraard de Duivelhof
+- Geraard de Duivelstraat
+- Geraniumstraat
+- Gerststraat
+- Gestichtstraat
+- Getouwstraat
+- Geuzenberg
+- Geuzenbolwerkpark
+- Gewad
+- Gezondheidstraat
+- Gezusters Lovelingstraat
+- Gijzelaarsweg
+- Gildestraat
+- Gillis Coppinssteeg
+- Gillis Coppinsstraat
+- Gillis de Sutterstraat
+- Glasgowstraat
+- Godshuishammeke
+- Godshuizenlaan
+- Goedendagstraat
+- Golfweg
+- Goolestraat
+- Gordunakaai
+- Goudenleeuwplein
+- Goudenregenstraat
+- Goudensterstraat
+- Goudstraat
+- Goudvinkstraat
+- Gouvernementstraat
+- Graaf Arnulfstraat
+- Graaf van Vlaanderenplein
+- Grachtstraat
+- Granietstraat
+- Graslei
+- Grauwpoort
+- Gravin Johannastraat
+- Greenockstraat
+- Grensstraat
+- Griendeplein
+- Griendijk
+- Grimbertpad
+- Groenbrugstraat
+- Groendreef
+- Groene Ooie
+- Groenebriel
+- Groenevalleilaan
+- Groenevalleipark
+- Groenewalstraat
+- Groentenmarkt
+- Groot-Brittanniëhof
+- Groot-Brittanniëlaan
+- Grootkanonplein
+- Grote Huidevettershoek
+- Gruuthuusestraat
+- Guldenspoorstraat
+- Guldenvliesstraat
+- Gustaaf Callierlaan
+- Gustaaf Den Duitsdreef
+- Gustaaf Eylenboschplein
+- Gustaaf Magnelstraat
+- Gustaaf Vanaisedreef
+- Gustaaf Vanden Meerschestraat
+- Göteborgstraat
+- Haanstraat
+- Haardstedestraat
+- Hagedisstraat
+- Hagelandkaai
+- Hakkeneistraat
+- Halenpad
+- Halfweg
+- Ham
+- Hamburgstraat
+- Hamerlandtragel
+- Hamerstraat
+- Hammerikstraat
+- Handbalstraat
+- Handelsdokkaai
+- Harelbekestraat
+- Haringsteeg
+- Haspelstraat
+- Haverstraat
+- Hazelaarstraat
+- Hazewindstraatje
+- Hebbrechtstraat
+- Hector Van Wittenberghestraat
+- Heernislaan
+- Heershagestraat
+- Heilig-Bloedstraat
+- Heilig-Sacramentstraat
+- Heilige-Geeststraat
+- Hekelaarsstraat
+- Heldenplein
+- Helsinkistraat
+- Hendrik Waelputstraat
+- Hendrik van Brederodestraat
+- Henegouwenstraat
+- Henleykaai
+- Henri Dunantlaan
+- Henri Farmanstraat
+- Henri Maerenbrug
+- Herdenkingslaan
+- Herderstraat
+- Herfststraat
+- Hermelindepad
+- Herrystraat
+- Hertogstraat
+- Hertstraat
+- Hippoliet Lammensstraat
+- Hippoliet Lippensplein
+- Hippolyte Metdepenningenstraat
+- Hoefslagstraatje
+- Hof ten Walle
+- Hof ter Mere
+- Hof van Fiennes
+- Hofbouwlaan
+- Hofmeierstraat
+- Hofstraat
+- Hogeweg
+- Holdaal
+- Holstraat
+- Hoofdkerkstraat
+- Hoogpoort
+- Hoogstraat
+- Hooiaard
+- Hoornstraat
+- Hoppestraat
+- Hortensiastraat
+- Hospitaalstraat
+- Houtbriel
+- Houtdoklaan
+- Houtemlaan
+- Houthulststraat
+- Hoveniersberg
+- Hubert Frère-Orbanlaan
+- Hugo Van der Goesstraat
+- Huidevetterken
+- Huidevetterskaai
+- Hulstboomstraat
+- Hurstweg
+- Hyacintstraat
+- Iepensteeg
+- Iepenstraat
+- Ijkmeesterstraat
+- Ijskelderstraat
+- Ijzendijkestraat
+- Ijzerlaan
+- Ijzertijdhof
+- Ijzertijdweg
+- Imsakkerlaan
+- Ingelandgat
+- Irisstraat
+- Isabellakaai
+- Isegrimstraat
+- Jacob van Maerlantstraat
+- Jacques de Lalaingdreef
+- Jadestraat
+- Jakob Heremansstraat
+- Jakob Jordaensstraat
+- Jakob Ondermaercqplein
+- Jakob Van Caeneghemstraat
+- Jakobijnenstraat
+- Jan Baptist Davidstraat
+- Jan Botermanstraat
+- Jan Breydelstraat
+- Jan Delvinlaan
+- Jan Frans Willemsstraat
+- Jan Hoetplein
+- Jan Lampensstraat
+- Jan Palfijnstraat
+- Jan Stassinsplein
+- Jan Verspeyenstraat
+- Jan Yoensstraat
+- Jan van Gentstraat
+- Jan van Haelststraat
+- Jan van Hembysebolwerk
+- Jan van Stopenberghestraat
+- Jan zonder Vreesstraat
+- Jan-Baptist Boterdaelestraat
+- Jan-Baptist Guinardstraat
+- Jasmijnstraat
+- Jaspisstraat
+- Jean Raystraat
+- Jemappesstraat
+- Jenny Montignypad
+- Jenny Walrystraat
+- Jeruzalemstraat
+- Jockeystraat
+- Jodenstraat
+- Johan Daisnestraat
+- Johannes Schrantstraat
+- John Kennedylaan
+- Jongenstragel
+- Jonkvrouw Mattestraat
+- Joos Lambrechtstraat
+- Joost Clemmenstraat
+- Joremaaie
+- Jozef Cantréstraat
+- Jozef De Veusterstraat
+- Jozef Guislainstraat
+- Jozef II-straat
+- Jozef Kluyskensstraat
+- Jozef Mengaldreef
+- Jozef Plateaustraat
+- Jozef Van Crombrugghestraat
+- Jubileumlaan
+- Judoweg
+- Jules Boulvinstraat
+- Jules Bretondreef
+- Jules De Bruyckerdreef
+- Julius de Vigneplein
+- Justus Lipsiusstraat
+- Justus de Harduwijnlaan
+- Jutestraat
+- Kaarderijstraat
+- Kaatsspelplein
+- Kabelsteeg
+- Kajuitstraat
+- Kalandeberg
+- Kalandestraat
+- Kalvermarkt
+- Kalversteeg
+- Kammerstraat
+- Kanazawastraat
+- Kanodreef
+- Kantienberg
+- Kanunnikstraat
+- Kapelaanstraat
+- Kapiteinstraat
+- Kapittelstraat
+- Kaprijkestraat
+- Kapucijnenham
+- Karel Antheunisstraat
+- Karel Lodewijk Dierickxstraat
+- Karel Lodewijk Ledeganckstraat
+- Karel Mirystraat
+- Karel Rijmhof
+- Karel Van Hulthemstraat
+- Karel Waeriplein
+- Karel de Stoutestraat
+- Karel van de Woestijnestraat
+- Karmelietenstraat
+- Karperstraat
+- Karrenstraat
+- Kartuizerlaan
+- Kastanjestraat
+- Kasteellaan
+- Kasterbant
+- Kattenberg
+- Kauwplein
+- Kazemattenstraat
+- Kazernenstraat
+- Keizer Karelstraat
+- Keizer Leopoldstraat
+- Keizerpark
+- Keizervest
+- Keizerviaduct
+- Kempstraat
+- Keramiekstraat
+- Ketelpoort
+- Ketelvest
+- Kettingstraat
+- Keviestraat
+- Kiekenstraat
+- Kievitlaan
+- Kiezelstraat
+- Kikvorsstraat
+- Klapeksterstraat
+- Klaproosstraat
+- Klaverstraat
+- Klein Raamhof
+- Klein Turkije
+- Kleindokkaai
+- Kleine Vismarkt
+- Kleinvleeshuissteeg
+- Kleppersstraat
+- Kluizenaarstraat
+- Kluizensesteenweg
+- Knokkestraat
+- Koekoeklaan
+- Koen Blieckpad
+- Koen Blieckplein
+- Koepoortkaai
+- Koersenstraat
+- Koestraat
+- Koffiesteeg
+- Kogelstraat
+- Koggestraat
+- Kokerstraat
+- Kolibrieweg
+- Kolveniersgang
+- Komijnstraat
+- Kongostraat
+- Koning Albertlaan
+- Koning Albertpark
+- Koning Boudewijnstraat
+- Koning Leopold II-laan
+- Koning Nobelplein
+- Koningin Astridlaan
+- Koningin Astridpark
+- Koningin Elisabethlaan
+- Koningin Fabiolalaan
+- Koningin Maria Hendrikaplein
+- Koningin Mathildeplein
+- Koningin Paolaplein
+- Koningsdal
+- Koningstraat
+- Koolkapperstraat
+- Koolmeesstraat
+- Koolsteeg
+- Koophandelsplein
+- Koopvaardijlaan
+- Kopenhagenstraat
+- Koperstraat
+- Korenbloemstraat
+- Korenlei
+- Korenmarkt
+- Korhoenstraat
+- Korianderstraat
+- Kornalijnstraat
+- Korte Kruisstraat
+- Korte Meer
+- Korte Sint-Salvatorstraat
+- Kortedagsteeg
+- Kortemunt
+- Kortrijksepoortstraat
+- Kortrijksesteenweg
+- Kouter
+- Kouterdreef
+- Koutersteeg
+- Kozijntjesstraat
+- Kraaidam
+- Kraaienbolledoorgang
+- Kraaienbollepad
+- Kraaienbolleplein
+- Kraaistraat
+- Kraankindersstraat
+- Kraanlei
+- Kramersplein
+- Kreeftstraat
+- Kreekstraat
+- Krevelstraat
+- Kriekelaarstraat
+- Krijgsgasthuisstraat
+- Krijgslaan
+- Kristalstraat
+- Kristoffel Van den Berghestraat
+- Krommenelleboog
+- Krommewal
+- Kroonstraat
+- Kruideniersstraat
+- Kruisboogstraat
+- Kruitmagazijnstraat
+- Kuiperskaai
+- Kuipgat
+- Kunstlaan
+- Kwaadham
+- Kwakkelstraat
+- Kwartelstraat
+- La Sapinière
+- Lambert Queteletstraat
+- Lammerstraat
+- Lamoraal van Egmontstraat
+- Land van Waaslaan
+- Landbouwersstraat
+- Landingsplein
+- Landverhuizerskaai
+- Lange Boomgaardstraat
+- Lange Kruisstraat
+- Lange Schipgracht
+- Lange Steenstraat
+- Lange Violettestraat
+- Langemunt
+- Langerbrugge-Eiland
+- Langerbruggekaai
+- Langerbruggestraat
+- Langhalsstraat
+- Laurent Delvauxstraat
+- Lavendelstraat
+- Lazuurstraat
+- Leebeekstraat
+- Leeuwerikstraat
+- Leeuwstraat
+- Leiekaai
+- Leiestraat
+- Leithstraat
+- Leliestraat
+- Lentestraat
+- Leo Baekelandstraat
+- Lieremanstraat
+- Lievekaai
+- Lieven Bauwensplein
+- Lieven Plumionplein
+- Lieven de Winnestraat
+- Lievestraat
+- Lijnwaadstraat
+- Lijsterstraat
+- Lily Boeykensstraat
+- Limbastraat
+- Limburgstraat
+- Lindenlei
+- Linnenstraat
+- Lisbloemstraat
+- Liverpoolstraat
+- Lobeliastraat
+- Lodewijk van Malestraat
+- Logboekstraat
+- Logstraat
+- Londenstraat
+- Loodgietersstraat
+- Loodsenstraat
+- Looppad
+- Lorkenstraat
+- Lostraat
+- Louis Cloquetstraat
+- Louis Hanssensdreef
+- Louis Minarddreef
+- Louis Pasteurlaan
+- Louis Roelandtplein
+- Lozevisserstraat
+- Lucas Munichstraat
+- Lucas de Heerestraat
+- Luchtballonstraat
+- Lucienne Herman-Michielsensstraat
+- Luiklaan
+- Luxemburgstraat
+- Lübeckstraat
+- Maagdestraat
+- Maaltebrugge-Park
+- Maaltebruggestraat
+- Maaseikstraat
+- Madeleine Schauvliegestraat
+- Madeliefjesstraat
+- Maeswal
+- Mageleinsteeg
+- Mageleinstraat
+- Magnoliastraat
+- Mahatma Gandhistraat
+- Makelaarsstraat
+- Malachietstraat
+- Malemstraat
+- Malpertuuspark
+- Malpertuusplein
+- Manchesterstraat
+- Manilastraat
+- Marathonstraat
+- Marcelle Defay-Wibierstraat
+- Maria van Boergondiëstraat
+- Maria-Theresiastraat
+- Marialand
+- Marseillestraat
+- Martelaarslaan
+- Martin Luther Kingstraat
+- Matadibrug
+- Mathias Gesweinstraat
+- Matrozenstraat
+- Maurice De Weertstraat
+- Maurice Dupuislaan
+- Maurice Maeterlinckstraat
+- Maïsstraat
+- Meelstraat
+- Meerhem
+- Meerseniersstraat
+- Meersgatstraat
+- Meersstraat
+- Meeuwstraat
+- Meibloemstraat
+- Melkerijstraat
+- Melkhambrug
+- Merelstraat
+- Merkemstraat
+- Metselaarsstraat
+- Meulestedekaai
+- Meulesteedsesteenweg
+- Mierhulpad
+- Mijnhoutkaai
+- Mimosastraat
+- Minnemeers
+- Miriam Makebaplein
+- Moerlandstraat
+- Moerpad
+- Moervaartstraat
+- Moestuinstraat
+- Molenaarsstraat
+- Monterreystraat
+- Morganietstraat
+- Motorstraat
+- Moutstraat
+- Muidelaan
+- Muidepoort
+- Muilaardstraat
+- Muinkkaai
+- Muinklaan
+- Muinkpark
+- Muishondstraat
+- Mule Jennystraat
+- Myosotisstraat
+- Nadine Crappéstraat
+- Napoleon Destanbergstraat
+- Narcisstraat
+- Nederkouter
+- Nederkwaadham
+- Nederpolder
+- Neermeerskaai
+- Nekkersberglaan
+- Nekkersputstraat
+- Nelson Mandelapromenade
+- Neringstraat
+- Neuseplein
+- New-Orleansstraat
+- New-Yorkstraat
+- Nicolaas Zannekinstraat
+- Nicolaï Kossikoffstraat
+- Nieuwbrugkaai
+- Nieuwebosstraat
+- Nieuwevaart
+- Nieuwewandeling
+- Nieuwewijkstraat
+- Nieuwhof
+- Nieuwland
+- Nieuwpoort
+- Nimfenstraat
+- Nodenaysteeg
+- Noendries
+- Nonnemeersstraat
+- Noorderdoorgang
+- Noorderlaan
+- Noordstraat
+- Noordveenakkerstraat
+- Noormanstraat
+- Norbert Rosseaudreef
+- Normaalschoolstraat
+- Normandiëlaan
+- Notarisstraat
+- Notelaarstraat
+- Oceaniëstraat
+- Offerlaan
+- Ogier van Boesbekestraat
+- Okapistraat
+- Okkernootsteeg
+- Oktrooiplein
+- Oliestraat
+- Olifantstraat
+- Olijfstraat
+- Olympiadeplein
+- Ommegangstraat
+- Onafhankelijkheidslaan
+- Onderbergen
+- Onderstraat
+- Ontmijnersstraat
+- Ooievaarstraat
+- Ooilamstraat
+- Oosteeklostraat
+- Oostendestraat
+- Oostenrijkersstraat
+- Opaalstraat
+- Opgeëistenlaan
+- Opvoedingstraat
+- Oranjeberg
+- Oslostraat
+- Ossenstraat
+- Ottergembrug
+- Ottergemsesteenweg
+- Ottergemsesteenweg-Zuid
+- Ottogracht
+- Oud-Strijderslaan
+- Oudburg
+- Oude Beestenmarkt
+- Oude Fortweg
+- Oude Houtlei
+- Oude Schaapmarkt
+- Oudenaardsesteenweg
+- Oudescheldestraat
+- Oudevest
+- Overpoortstraat
+- Overreke
+- Overwale
+- Overzet
+- Paardestraat
+- Pacificatielaan
+- Paddelstraat
+- Paddenhoek
+- Paketbootstraat
+- Pakhuisstraat
+- Pakketbootpad
+- Palinghuizen
+- Pannestraat
+- Pantserschipstraat
+- Papegaaistraat
+- Papiermolenstraat
+- Papinnestraat
+- Parachutistenweg
+- Paradijszak
+- Parallelweg
+- Parelhoenstraat
+- Parijsberg
+- Parklaan
+- Parkplein
+- Passagierstraat
+- Patijntjestraat
+- Patrijsstraat
+- Paul Bergmansdreef
+- Paul Fredericqstraat
+- Paul de Smet de Naeyerplein
+- Pauwstraat
+- Peerstraat
+- Pekelharing
+- Pelikaanstraat
+- Penitentenstraat
+- Pensmarkt
+- Peperstraat
+- Perkamentstraat
+- Persellestraat
+- Perzikstraat
+- Philips Landsbergiuslaan
+- Phoenixstraat
+- Pierkespark
+- Pierre De Geyterstraat
+- Pieter Colpaertsteeg
+- Pieter Huyssensplein
+- Pieter Vanderdoncktdoorgang
+- Pieter de Keyserestraat
+- Pijlstraat
+- Pijndersstraat
+- Pilorijnstraat
+- Pioenstraat
+- Platteberg
+- Plotersgracht
+- Pluimstraat
+- Poel
+- Poeljemarkt
+- Poelsnepstraat
+- Politieke-Gevangenenlaan
+- Pollepelstraat
+- Poperingestraat
+- Porfierstraat
+- Port Arthurlaan
+- Posteernestraat
+- Predikherenlei
+- Pretoriastraat
+- Prinsenhof
+- Prinsenhofplein
+- Prinses Clementinalaan
+- Proeftuinstraat
+- Prooststraat
+- Prosper Claeysstraat
+- Provenierstersstraat
+- Prudens Van Duyseplein
+- Puinstraat
+- Pussemierstraat
+- Raafstraat
+- Raas van Gaverestraat
+- Rabotpark
+- Rabotstraat
+- Radijsstraat
+- Raffinaderijstraatje
+- Raketstraat
+- Ramen
+- Ramskapellelaan
+- Rasphuisstraat
+- Ravensteinstraat
+- Raveschootstraat
+- Recollettenlei
+- Redersplein
+- Reep
+- Reepweg
+- Regattenlaan
+- Reigerstraat
+- Reigersvlietweg
+- Reinaertstraat
+- Reke
+- Rekelingestraat
+- Rembert Dodoensdreef
+- Renbaanstraat
+- Rerum-Novarumplein
+- Resedastraat
+- Ridderstraat
+- Rietstraat
+- Rigakaai
+- Rijmsdam
+- Rijsenbergstraat
+- Rinkhoutpad
+- Robert Hoozeepark
+- Robijnstraat
+- Rodekoningstraat
+- Rodelijvekensstraat
+- Roderoestraat
+- Rodetorenkaai
+- Roeiersweg
+- Roeispaanstraat
+- Roerstraat
+- Roggestraat
+- Rokerelsstraat
+- Romain Deconinckplein
+- Rombaut Keldermansstraat
+- Romeinse Hof
+- Romeinse Weg
+- Rommelwaterpark
+- Ronselestraat
+- Rooigemlaan
+- Roosakker
+- Rotterdamstraat
+- Rozemarijnstraat
+- Rozendaalken
+- Rozier
+- Rugbylaan
+- Ruststraat
+- Saffierstraat
+- Saghermansstraat
+- Salamanderstraat
+- Sanderswal
+- Santospad
+- Santosstraat
+- Sassekaai
+- Sassevaartpark
+- Sassevaartstraat
+- Savaanstraat
+- Scandinaviëstraat
+- Schaliestraat
+- Scharlakenstraat
+- Schaverdijnstraat
+- Scheeplosserstraat
+- Scheepvaartstraat
+- Scheepzatestraat
+- Schepenenvijverstraat
+- Schepenhuisstraat
+- Schipdonkweg
+- Schipperskaai
+- Schoenerstraat
+- Schoenlapperstraat
+- Schommelstraat
+- Schoolkaai
+- Schoonmeersstraat
+- Schootkouterstraat
+- Schouwburgstraat
+- Schouwvegersstraat
+- Schrijnwerkersstraat
+- Schuddeveestraatje
+- Schuddevisstraatje
+- Schuurkenstraat
+- Seminariestraat
+- Serafijnstraat
+- Serpentstraat
+- Siervogelstraat
+- Silexstraat
+- Simon Van Asscheplein
+- Simon de Mirabellostraat
+- Singel
+- Sint-Agnetestraat
+- Sint-Amandplein
+- Sint-Amandstraat
+- Sint-Amelbergastraat
+- Sint-Annaplein
+- Sint-Annastraat
+- Sint-Antoniushof
+- Sint-Antoniuskaai
+- Sint-Baafsdorp
+- Sint-Baafsplein
+- Sint-Baafssteeg
+- Sint-Barbarastraat
+- Sint-Bernadettestraat
+- Sint-Clarastraat
+- Sint-Coletastraat
+- Sint-Crispijnstraat
+- Sint-Denijslaan
+- Sint-Elisabethplein
+- Sint-Hubertusstraat
+- Sint-Jacobsnieuwstraat
+- Sint-Jan-Baptiststraat
+- Sint-Jansdreef
+- Sint-Jansvest
+- Sint-Joriskaai
+- Sint-Juliaanstraat
+- Sint-Katelijnestraat
+- Sint-Kristoffelstraat
+- Sint-Kwintensberg
+- Sint-Liesbetsteeg
+- Sint-Lievensdoorgang
+- Sint-Lievenslaan
+- Sint-Lievenspoortstraat
+- Sint-Lievenstunnel
+- Sint-Machariusstraat
+- Sint-Margrietstraat
+- Sint-Martensblindeken
+- Sint-Martensstraat
+- Sint-Michielshelling
+- Sint-Michielsplein
+- Sint-Michielsstraat
+- Sint-Niklaasstraat
+- Sint-Paulusstraat
+- Sint-Pietersaalststraat
+- Sint-Pietersnieuwstraat
+- Sint-Pietersplein
+- Sint-Salvatorstraat
+- Sint-Theresiastraat
+- Sint-Veerleplein
+- Sint-Vincentiusplein
+- Sint-Widostraat
+- Sisalstraat
+- Skiweg
+- Slachthuisstraat
+- Sleepstraat
+- Sleewagenstraat
+- Sleutelbloemstraat
+- Slinke Molenstraat
+- Sloepstraat
+- Sluikpersstraat
+- Sluismeesterstraat
+- Sluisweg
+- Sluizeken
+- Sluizekenkaai
+- Sluizekenstraat
+- Smaragdstraat
+- Smidsestraat
+- Snepdijk
+- Snepkaai
+- Sneppenbrugpad
+- Sneppenbrugstraat
+- Snoekstraat
+- Sophie Van Akenstraat
+- Spaanskasteelplein
+- Spaarstraat
+- Spadestraat
+- Spanjaardstraat
+- Sparrestraat
+- Speelmanstraat
+- Speldenstraat
+- Sperwerstraat
+- Spiegelhofstraat
+- Spijkeboorstraat
+- Spijkstraat
+- Spinmolenplein
+- Spinnerijdoorgang
+- Spinnerstraat
+- Spitaalpoortstraat
+- Sportstraat
+- Staakskenstraat
+- Stadhuissteeg
+- Stalhof
+- Stapelplein
+- Steenakker
+- Steendam
+- Steltloperstraat
+- Steve Bikobrug
+- Stierstraat
+- Stokerijstraat
+- Stoofstraat
+- Stoppelstraat
+- Stormvogelstraat
+- Straatje Zonder Einde
+- Straatje van Oliveten
+- Strandlaan
+- Strandloperstraat
+- Strodekkersstraat
+- Stropkaai
+- Stropstraat
+- Stropweg
+- Struifstraat
+- Stukwerkersstraat
+- Suikerijsteeg
+- Suzanne Lilarstraat
+- Takkebosstraat
+- Tapijtstraat
+- Tapuitstraat
+- Tarbotstraat
+- Tarwestraat
+- Tempelhof
+- Tenderstraat
+- Tennisbaanstraat
+- Tentoonstellingslaan
+- Ter Luchtedoorgang
+- Ter Luchtehof
+- Ter Luchtepad
+- Ter Luchteplein
+- Ter Platen
+- Terhagen
+- Terneuzenlaan
+- Tervatestraat
+- Textielstraat
+- Theresianenstraat
+- Théodore Canneelpad
+- Tichelrei
+- Tiebaertsteeg
+- Tijgerstraat
+- Tijkstraat
+- Timichegtunnel
+- Tinkstraat
+- Tinnenpotstraat
+- Toemaattragel
+- Tolhuiskaai
+- Tolhuislaan
+- Tolpoort
+- Tondelierlaan
+- Tondelierpark
+- Tongstraat
+- Tortelduifstraat
+- Traktaatweg
+- Trimlaan
+- Triomfstraat
+- Trommelstraat
+- Tuinwijklaan
+- Tulpstraat
+- Turrepoortsteeg
+- Tussen 't Pas
+- Tussen Bermen
+- Twaalfkameren
+- Tweebruggenstraat
+- Tweekerkenstraat
+- Twijndersstraat
+- Uilkensstraat
+- Universiteitstraat
+- Ursulinenstraat
+- Vaartstraat
+- Vaderlandstraat
+- Valentin Vaerwyckweg
+- Valkeniersstraat
+- Varkensstraat
+- Veenakkerpad
+- Veergrep
+- Veerkaai
+- Veermanplein
+- Veeweg
+- Veldstraat
+- Verapazbrug
+- Verdedigingstraat
+- Verenigde-Natieslaan
+- Verlorenkost
+- Veronicastraat
+- Verpleegstersstraat
+- Ververijstraat
+- Victor Frisstraat
+- Victor Hortastraat
+- Victoriastraat
+- Vijfwindgatenstraat
+- Vijvermeerspark
+- Vina Bovypark
+- Violierstraat
+- Virginiastraat
+- Visserij
+- Vissersdijk
+- Vizierstraat
+- Vlaamsekaai
+- Vlaanderenstraat
+- Vlasgaardstraat
+- Vlasmarkt
+- Vleeshuistragel
+- Vliegtuiglaan
+- Vlienderpad
+- Vlierstraat
+- Vlotstraat
+- Voetweg
+- Vogelenzang
+- Vogelenzangpark
+- Vogelmarkt
+- Voldersstraat
+- Volmolenstraat
+- Voorhavenkaai
+- Voorhavenlaan
+- Voorhavenpark
+- Voorhoutkaai
+- Voorjaarstraat
+- Voormuide
+- Vorkstraat
+- Voskenslaan
+- Vosmeers
+- Vossenkoer
+- Vrijdagmarkt
+- Vrijheidslaan
+- Vrijwilligersweg
+- Vrouwebroersstraat
+- Waaistraat
+- Waalsekrook
+- Waarschootstraat
+- Waldamkaai
+- Walpoortstraat
+- Warandestraat
+- Warmoezeniersweg
+- Wasstraat
+- Watergraafstraat
+- Watermolenstraat
+- Watersportlaan
+- Watervlietstraat
+- Watlingtonstraat
+- Weefselstraat
+- Weerstandsplein
+- Wellingstraat
+- Welvaartstraat
+- Werkstraat
+- Werregarenstraat
+- Wespstraat
+- Wessemweg
+- Westerlaan
+- Westerringspoorbrug
+- Weversstraat
+- Wiedauwkaai
+- Wielewaalpark
+- Wielewaalstraat
+- Wiemersdreef
+- Wijngaardstraat
+- Wijzemanstraat
+- Wilderoosstraat
+- Wilgestraat
+- Willem Tellstraat
+- Willem Wenemaerstraat
+- Willem de Beersteeg
+- Willem van Nassaustraat
+- Windmolenstraat
+- Winston Churchillplein
+- Winterstraat
+- Wintertuinstraat
+- Wispelbergstraat
+- Wissenhagestraat
+- Wittekaproenenplein
+- Wittelinkstraat
+- Wittewalle
+- Woeringenstraat
+- Wolfstraat
+- Wolterslaan
+- Wondelgemkaai
+- Wondelgemstraat
+- Woodrow Wilsonplein
+- Yachtdreef
+- Zaamslagstraat
+- Zalmstraat
+- Zandberg
+- Zandpoortstraat
+- Zebrastraat
+- Zeemstraat
+- Zeeschipstraat
+- Zeestraat
+- Zeilschipstraat
+- Zeilstraat
+- Zesseptemberlaan
+- Zeugsteeg
+- Zieklien
+- Zijdestraat
+- Zilverenberg
+- Zilverhof
+- Zinniastraat
+- Zomerstraat
+- Zonder-Naampark
+- Zonder-Naamstraat
+- Zonnebloemstraat
+- Zonnestraat
+- Zoutstraat
+- Zuiddokweg
+- Zuiderdoorgang
+- Zuiderlaan
+- Zuidkaai
+- Zuidparklaan
+- Zuidstationstraat
+- Zuidveenakkerstraat
+- Zuivelbrugstraat
+- Zwaanstraat
+- Zwaardsteeg
+- Zwaluwstraat
+- Zwartekatstraat
+- Zwartezustersstraat
+- Zwijnaardsesteenweg
+
+### Gentbrugge
+
+- Achterdries
+- Adolf Samuëlstraat
+- Alfons Biebuycklaan
+- Alphonse De Clercqlaan
+- Ankerslaan
+- Antoon van Dyckstraat
+- Arbedpark
+- Armand Lonquestraat
+- Arsenaalstraat
+- Arthur Van Laethemstraat
+- Auguste Van Ooststraat
+- Avezoetestraat
+- Bassijnstraat
+- Berkendreef
+- Berkenhof
+- Bernheimlaan
+- Blauwfabriekpad
+- Bloemstraat
+- Boer Janssensstraat
+- Bosakker
+- Boswachterstraat
+- Boudewijn van der Lorestraat
+- Braemkasteelstraat
+- Braemstraat
+- Bruiloftstraat
+- Brusselsesteenweg
+- Bunderhof
+- Cameliastraat
+- Charles De Costerstraat
+- Claragoed
+- De Guchteneërestraat
+- De Naeyerdreef
+- Doornweide
+- Driebeekstraat
+- Dulle-Grietlaan
+- Dwarsstraat
+- Désiré Mercierlaan
+- Désiré Toeffaertstraat
+- Edith Cavellstraat
+- Edmond Blockstraat
+- Eduard Pêcherstraat
+- Emanuel Hielstraat
+- Emiel Claeyslaan
+- Emiel Hullebroeckplein
+- Emiel Van Swedenlaan
+- Emiel Verhaerenlaan
+- Eugeen Zetternamstraat
+- Florastraat
+- Frans Tochpark
+- Frederik Burvenichstraat
+- Gentbruggeaard
+- Gentbruggekouter
+- Gentbruggeplein
+- Gentbrugse Meersen
+- Gontrodestraat
+- Groeningestraat
+- Grootmeersweg
+- Guldenmeers
+- Gustaaf Le Fèvere de Ten Hovelaan
+- Hagepreekstraat
+- Hazenakker
+- Heidestraat
+- Hendrik Consciencestraat
+- Henri Bouckaertstraat
+- Henri Mortierstraat
+- Henri Pirennelaan
+- Henri Van Daelestraat
+- Het Kamp
+- Hilarius Bertolfstraat
+- Hippoliet Persoonsstraat
+- Hogepontstraat
+- Hoogoeverstraat
+- Houw
+- Hundelgemsesteenweg
+- Hélène Maréchalhof
+- Ibisstraat
+- Irma Lozinstraat
+- Irène Van Der Brachtstraat
+- Jacob Van Arteveldestraat
+- Jan Dhondtstraat
+- Jan Furnièrestraat
+- Jan Rijmstraat
+- Jan Samijnstraat
+- Jan Van Ryswyckstraat
+- Jan van Aelbroeckdreef
+- Jan van Aelbroecklaan
+- Jean Delorilaan
+- Jean Jaurèslaan
+- Jef Vandermeulenstraat
+- Jovastraat
+- Jozef Vercoulliestraat
+- Jozef Vervaenestraat
+- Jozef Wautersstraat
+- Jules De Cocklaan
+- Jules Destréelaan
+- Jules Mac Leodstraat
+- Jules Persynstraat
+- Jules Van Biesbroeckstraat
+- Jules de Saint-Genoisstraat
+- Keiberg
+- Kerkstraat
+- Klaverpoel
+- Kleemburg
+- Kliniekstraat
+- Klokstraat
+- Kluisstraat
+- Koningsdonkstraat
+- Korte Magerstraat
+- Lamme Goedzakstraat
+- Land van Rodelaan
+- Leeuw van Vlaanderenstraat
+- Leo Tertzweillaan
+- Leon De Loofstraat
+- Lieven Delaruyestraat
+- Lieven Duvoselstraat
+- Louis Van Houttestraat
+- Maagd van Gentstraat
+- Magerstraat
+- Marie Schellinckstraat
+- Mathilde Pedestraat
+- Maurice Verdoncklaan
+- Maurits Sabbestraat
+- Meersemdries
+- Meersemhof
+- Meersemwegel
+- Meidoorndreef
+- Meidoornhof
+- Mellestraat
+- Merelbekestationplein
+- Moriaanstraat
+- Moscouviaduct
+- Nederbrugstraat
+- Neerhofstraat
+- Neerscheldestraat
+- Nelestraat
+- Odilon Vanderlindenstraat
+- Oefenpleinstraat
+- Ooievaarsnest
+- Oscar De Gruyterstraat
+- Oscar Roelsstraat
+- Oude Brusselseweg
+- Oude Scheldeweg
+- Oudekouter
+- Park De Vijvers
+- Paul Lebrunstraat
+- Peter Benoitlaan
+- Petrus Jozef Triesthof
+- Petuniastraat
+- Philippe Van de Veldehof
+- Pinguinstraat
+- Platanendreef
+- Platanenhof
+- Ploegstraat
+- Priesterstraat
+- Prosper Van Langendonckstraat
+- Puntfabriekpad
+- Racingstraat
+- Raf Verhaeststraat
+- Rijkeklarenstraat
+- Robert Rinskopflaan
+- Robiniadreef
+- Robiniahof
+- Rode-Kruisstraat
+- Rodebeukendreef
+- Rodebeukenhof
+- Rosa Geingerstraat
+- Sasstraat
+- Scheldekaai
+- Schooldreef
+- Sidonie Verhelststraat
+- Sint-Eligiusstraat
+- Sint-Simonstraat
+- Slootwede
+- Sloversdreef
+- Sluizenweg
+- Steenbekestraat
+- Steenvoordelaan
+- Teaterstraat
+- Tennisstraat
+- Theophiel De Jaegerstraat
+- Tijl Uilenspiegelstraat
+- Tineke van Heulestraat
+- Tuinwijk De Warande
+- Tuinwijk ter Heide
+- Tweebunders
+- Tweekapellenstraat
+- Valerius De Saedeleerstraat
+- Van den Heckestraat
+- Veldwijkstraat
+- Verbroederingstraat
+- Victoria regiapark
+- Vijverhof
+- Vincent Evrardlaan
+- Virginie Marantpad
+- Vlinderstraat
+- Voetbalstraat
+- Vogelhoekstraat
+- Voordries
+- Vredestraat
+- Vroonbroek
+- Vuurstokerstraat
+- Walstraat
+- Watertorenstraat
+- Wegelakker
+- Weidestraat
+- Werkhuizenstraat
+- Weverbosdreef
+- Weverboslaan
+- Wijkpark De Porre
+- Zakstraat
+
+### Ledeberg
+
+- Achilles Heyndrickxlaan
+- Adolf Papeleupark
+- Adolf Van Ooteghemstraat
+- Ajuinmarktstraat
+- Alexis Dallièrestraat
+- Arthur Latourstraat
+- August Van Bockxstaelestraat
+- August Van Lokerenstraat
+- Bellevue
+- Bellevuepark
+- Bellevuestraat
+- Binnenweg
+- Bisschopstraat
+- Brusselsesteenweg
+- Centrumplein
+- Doorgang der Hallegasten
+- Doorgangstraat
+- Driesstraat
+- E3-plein
+- Edmond Van Hoorebekestraat
+- Edward Blaesstraat
+- Edward Pynaertkaai
+- Eindeke
+- Floristenstraat
+- Frans De Coninckstraat
+- Frans De Mildreef
+- Fransevaart
+- Frederik Burvenichstraat
+- Friedrich Froebelstraat
+- Gaston Crommenlaan
+- Guido Gezellestraat
+- Hagepreekstraat
+- Hannah Arendtstraat
+- Harmoniestraat
+- Henri-Joseph Reystraat
+- Hilarius Bertolfstraat
+- Hoefijzerstraat
+- Hoveniersstraat
+- Hundelgemsesteenweg
+- Huurhouderijstraat
+- Ijzerweglaan
+- Jacques Eggermontstraat
+- Jenny Tanghestraat
+- Jozef Horenbantweg
+- Jozef Vervaenestraat
+- Kleine Kerkstraat
+- Landjuweelstraat
+- Langestraat
+- Ledebergplein
+- Ledebergstraat
+- Lededries
+- Lieven Delaruyestraat
+- Loskaai
+- Louis De Smetstraat
+- Louis Van Houttestraat
+- Marie Popelinkaai
+- Meierij
+- Moriaanstraat
+- Onderwijsstraat
+- Oude Brusselseweg
+- Petrus De Meyerestraat
+- Pieter Lachaertstraat
+- Pol De Vischstraat
+- Posthoornstraat
+- Prosper Vincentstraat
+- Rederijkersstraat
+- Rodeleeuwstraat
+- Scheldekaai
+- Sente Clarenhof
+- Sint-Daniëlstraat
+- Steenhouwersstraat
+- Van den Heckestraat
+- Vuurkruisersstraat
+- Wazenaarstraat
+- Weldadigheidstraat
+- Willem Blanckestraat
+- Willem van Guliklaan
+- Zegepraalstraat
+- Zuidstraat
+
+### Mariakerke
+
+- Aan de linde
+- Adolf Kervynstraat
+- Adriaan Pietersstraat
+- Ahornlaan
+- Albrecht Dürerlaan
+- Alfons Minoodtlaan
+- Aloïs van de Vyverestraat
+- Alphonse Claeys-Bouüaertlaan
+- Alphonse Claeys-Boúúaertdreef
+- Amand Casier de ter Bekenlaan
+- Amandelboomlaan
+- André De Bruynestraat
+- Anemoonstraat
+- Beekstraat
+- Beekstraatdries
+- Bieslookstraat
+- Breebroekhof
+- Breebroekstraat
+- Broekstraat
+- Brugsesteenweg
+- Brugsevaart
+- Cipresdreef
+- Damaststraat
+- Damstraat
+- De Campagne
+- Domein Claeys-Boúúaert
+- Driepikkelstraat
+- Driesdreef
+- Durmstraat
+- Edgard Blancquaertstraat
+- Eeklostraat
+- Eekstuk
+- Elfnovemberstraat
+- Emiel Poetoustraat
+- Ernest Vanhaevermaetestraat
+- Esdoornstraat
+- Espenstraat
+- Flanelstraat
+- Gaston Gheldolflaan
+- Goudbrokaatstraat
+- Griffioenstraat
+- Groenestaakstraat
+- Guldenroedestraat
+- Gérard Willemotlaan
+- Haagwindestraat
+- Heizen
+- Hendrik Haagenstraat
+- Henri Storystraat
+- Henricus Bracqstraat
+- Hippoliet Van Peenestraat
+- Hoevepoort
+- Hof van Westbeke
+- Hoge Olm
+- Hogekouterhof
+- Hogekouterstraat
+- Hooiland
+- Industrieweg
+- Jean Pierre Baudetlaan
+- Juliaan Braekeleirsstraat
+- Julienne De Vetterstraat
+- Jupiterstraat
+- Jutestraat
+- Kalemeersstraat
+- Kaleweg
+- Kantstraat
+- Kasteeldreef
+- Kerkhofstraat
+- Kerselaarstraat
+- Kleimoer
+- Kleine Broekstraat
+- Kolegemkouter
+- Kollebloemstraat
+- Kollekasteelstraat
+- Korte Rijakkerstraat
+- Kosterstiende
+- Krommepopulierstraat
+- Lakenstraat
+- Lindekouterstraat
+- Losweg
+- Louis Varlezstraat
+- Lusthoflaan
+- Madelonstraat
+- Mahoniestraat
+- Marcus van Vaernewijckstraat
+- Mariakerkegeest
+- Mariakerkeplein
+- Marsstraat
+- Maurice Claeysplein
+- Mazestraat
+- Melkweide
+- Mercuriusstraat
+- Mimosastraat
+- Mispelbilk
+- Molenkouter
+- Molenwalstraat
+- Nieuwkolegemlaan
+- Noordbroek
+- Notenstraat
+- Octaaf Van Dammestraat
+- Olmstraat
+- Oranjeboomstraat
+- Oranjerielaan
+- Oud-Mooreghemstraat
+- Oudewal
+- Paul van Tieghemlaan
+- Petrus De Broestraat
+- Petrus Meirestraat
+- Pinksterbloemstraat
+- Plutostraat
+- Polderkenslaan
+- Raymond de Hemptinnelaan
+- Regenboog
+- René Van De Puttestraat
+- Rietgracht
+- Rijakker
+- Ringvaartweg-Mariakerke
+- Rodeberg
+- Rodonkstraat
+- Satijnstraat
+- Saturnusstraat
+- Schaatsmeers
+- Schoubroek
+- Sierheesterlaan
+- Sint-Corneliusstraat
+- Speistraat
+- Spellewerkstraat
+- Stanislaw Maczekpad
+- Stanislaw Maczekstraat
+- Steengoedstraat
+- Strobloemstraat
+- Trekweg
+- Treurwilgenstraat
+- Tussen Heerwegen
+- Unescolaan
+- Uranusstraat
+- Vaarnewijkpark
+- Vaartstraat
+- Valkenhuisweg
+- Venusstraat
+- Verlorensteenstraat
+- Verschansingsstraat
+- Vijfhoekstraat
+- Vijverstraat
+- Vinderhoutsedam
+- Vlasstraat
+- Vliegpleinkouter
+- Volkshaardstraat
+- Waalkens
+- Weefselstraat
+- Welpengang
+- Wijmenstraat
+- Wilgetronkstraat
+- Wolstraat
+- Wolvengracht
+- Zandekensstraat
+- Zandloperstraat
+- Zomerliefstraat
+- Zuidbroek
+
+### Mendonk
+
+- Braamtweg
+- Evenstuk
+- Hulsdonk
+- Korte Mate
+- Lange Mate
+- Mendonkdorp
+- Oostdonkstraat
+- Pollaersdam
+- Rodenhuizestraat
+- Spanjeveerstraat
+- Sprendonkstraat
+- Windgat
+
+### Oostakker
+
+- Aan de Ratte
+- Absdalestraat
+- Achtene
+- Achtenkouterstraat
+- Alfons Van den Broeckstraat
+- Antwerpsesteenweg
+- Augustijn Moreelsstraat
+- Bertha Boonantsstraat
+- Braamakker
+- Bredestraat
+- Brielkenpad
+- Broedersweg
+- Bruisteke
+- Celine Dangottestraat
+- Christiaan Van der Heydenlaan
+- Cristiaan Brosteauxstraat
+- Daknamstraat
+- Domien Geersstraat
+- Dreef
+- Dreefakker
+- Drieselstraat
+- Driezwaantjesstraat
+- Dwight Eisenhowerlaan
+- Edgard Tinelstraat
+- Edmond Helderweirdtstraat
+- Edmond Ronsestraat
+- Eekhoutdriesstraat
+- Eikenplanterij
+- Eikstraat
+- Eksaardserijweg
+- Elise Grandprezstraat
+- Elzenhof
+- Emilie Schattemanstraat
+- Faltselestraat
+- François Van Impelaan
+- Gasthuisstraat
+- Gebroeders Jacobspad
+- Gefusilleerdenstraat
+- Gentstraat
+- Godelieve Joliestraat
+- Goedlevenstraat
+- Govaartsakker
+- Grasland
+- Groenehoekstraat
+- Groenespechtstraat
+- Groenespechtwegel
+- Groenstraat
+- Groenvinkstraat
+- Handekenskruidstraat
+- Harlekijnstraat
+- Hellegat
+- Henri Bernard de Tracylaan
+- Herman Teirlinckstraat
+- Hof van Oombergen
+- Hollenaarstraat
+- Hondskruidstraat
+- Honoré Drubbelstraat
+- Hulsterlostraat
+- Hyacinth Lippensstraat
+- Invalidenplaats
+- Invalidenstraat
+- Ivonna Nevejanstraat
+- Jacobus De Keukelaerestraat
+- Jeanne Nowéstraat
+- Jef Tinelstraat
+- Jozef Cardijnlaan
+- Jozef Paelinckstraat
+- Kamerijkstraat
+- Katoenstraat
+- Kemzekestraat
+- Kleemstraat
+- Koewachterstraat
+- Koraalwortelstraat
+- Korfdragerstraat
+- Korteheerweg
+- Kouterbosstraat
+- Koutergoedstraat
+- Krijtekerkweg
+- Krijtestraat
+- Krommeboom
+- Landmanstraat
+- Langenaarstraat
+- Langerbruggestraat
+- Ledergemstraat
+- Leonard De Laviestraat
+- Leonie Rammeloostraat
+- Louise Derachestraat
+- Lourdesstraat
+- Maalgaver
+- Magergoed
+- Magergoedhof
+- Magergoedkouter
+- Marie Mineurstraat
+- Marie-Thérèse de Courtebournelaan
+- Maurits Gysselingstraat
+- Meerakker
+- Meerhoutstraat
+- Molzelebilk
+- Molzelehof
+- Molzelepad
+- Molzelestraat
+- Moststraat
+- Mostwegel
+- Muizelstraat
+- Muldersveld
+- Noordakker
+- Onze Lieve Vrouwdreef
+- Onze Lieve Vrouwstraat
+- Ooistraat
+- Oostakkerdorp
+- Orchideestraat
+- Oude Holstraat
+- Oude Veldstraat
+- Oudebareelstraat
+- Paardenbulkpad
+- Paardeweiken
+- Petrus Hostestraat
+- Pijkestraat
+- Pijphoekstraat
+- Puigem
+- Ramstraat
+- Renaat De Rudderstraat
+- Rietorchisstraat
+- Rita Gorrstraat
+- Romain Clausstraat
+- Roos Proesmansstraat
+- Schaapdries
+- Schaapscheerderstraat
+- Schansakker
+- Schapenfokkerspad
+- Schoenmakersstraat
+- Schoonakker
+- Schoutstraat
+- Sint-Arnoutstraat
+- Sint-Jozefstraat
+- Sint-Laurentiuslaan
+- Sint-Rafaëlstraat
+- Slotenbilk
+- Slotendries
+- Smalleheerweg
+- Sofie Schollstraat
+- Standelkruidstraat
+- Stefaan Glorieuxlaan
+- Stokt
+- Te Winkel
+- Ter Hand
+- Traktaatweg
+- Vanillestraat
+- Veldekensstraat
+- Vendelpad
+- Vendelstraat
+- Venusschoentjestraat
+- Vogeljacht
+- Voordestraat
+- Vossenbergstraat
+- Waterstraat
+- Wespenorchisstraat
+- Wildebrake
+- Wilhelmina Druckerstraat
+- Wittewalle
+- Wolfputstraat
+- Wolweverspad
+- Wulverdam
+- Zalegemstraat
+- Zangvogellaan
+- Zuidakkerlaan
+
+### Sint-Amandsberg
+
+- Aannemersstraat
+- Achtenkouterpad
+- Achtenkouterstraat
+- Achterstraat
+- Admiraaldreef
+- Adolf Baeyensstraat
+- Adolf Daensstraat
+- Albrecht Rodenbachstraat
+- Alfons Braeckmanlaan
+- Antwerpsesteenweg
+- Antwerpsevoetweg
+- Asterdreef
+- August Sniedersstraat
+- August Van Geertstraat
+- Azaleapark
+- Azaleastraat
+- Banierstraat
+- Beelbroekhof
+- Beelbroekpad
+- Beelbroekstraat
+- Beeldhouwersstraat
+- Biest
+- Bloemistenstraat
+- Boomkruiperstraat
+- Bosduifstraat
+- Bouwmeestersstraat
+- Bromeliastraat
+- Brunaustraat
+- Camille D'Havéstraat
+- Campo-Santoplein
+- Charles Doudeletstraat
+- Christine D'haenhof
+- Cécile Cautermanstraat
+- Daniël Mareskastraat
+- Dendermondsesteenweg
+- Destelbergenstraat
+- Distelvinkstraat
+- Doornakkerstraat
+- Doornbilkstraat
+- Draversstraat
+- Duivestaartstraat
+- Edgard Tinelstraat
+- Emiel Lossystraat
+- Emiel Maeyensstraat
+- Engelbert van Arenbergstraat
+- Engelstraat
+- Esperantostraat
+- Evarist De Buckstraat
+- Everstraat
+- Ferdinand Snellaertplein
+- Filip De Pillecijnstraat
+- Filips Benthuysstraat
+- Frans Gevaertstraat
+- Frans Masereelstraat
+- Frans Uyttenhovestraat
+- Frederik Vanmellestraat
+- Gabriël Celisstraat
+- Gentbruggestraat
+- Geo Langiestraat
+- Georges Maenhoutdreef
+- Georges Wibierdreef
+- Goedlevenstraat
+- Grasmusstraat
+- Grondwetlaan
+- Groot Begijnhof
+- Grote Wede
+- Grote Wedepad
+- Gustaaf Carelshof
+- Halvemaanstraat
+- Hans Memlingstraat
+- Havikstraat
+- Heernisplein
+- Heilig-Hartplein
+- Heilig-Hartstraat
+- Heilig-Kruisplein
+- Heiveldstraat
+- Henri Van Cleemputteplein
+- Herlegemstraat
+- Hippodroomlaan
+- Hogeweg
+- Houtduifstraat
+- Hugo Verrieststraat
+- Isidoor De Vosstraat
+- Jan Blockxstraat
+- Jan Roomsstraat
+- Jean Béthunestraat
+- Jeanne Vignerystraat
+- Jef Crickstraat
+- Joannes Roegierspad
+- Johannes Hartmannlaan
+- Jos Verdegemstraat
+- Joseph Gérardstraat
+- Jozef Goossenaertsstraat
+- Julius Vuylstekestraat
+- Karel Van Renterghemstraat
+- Karnemelkwegel
+- Kasteelwegel
+- Ketshage
+- Klauwierstraat
+- Kleine Schuurstraat
+- Kleine Wedepad
+- Klinkkouterstraat
+- Koerspleinstraat
+- Korte Straatje
+- Kortedreef
+- Krekelberg
+- Kriekerijstraat
+- Kunstenaarstraat
+- Land van Waaslaan
+- Ledestraat
+- Leon Sarteelstraat
+- Lepelaarstraat
+- Lijnmolenstraat
+- Lijntjespoelpad
+- Lijsterbesdreef
+- Louis Schuermanstraat
+- Luc Van Parysstraat
+- Maalderijstraat
+- Maurice Sysstraat
+- Maurits Van Lierdestraat
+- Mezenstraat
+- Mierenbospad
+- Moerlandstraat
+- Nachtegaaldreef
+- Nachtegaalstraat
+- Nekkersvijverstraat
+- Nieuwelaan
+- Nijverheidskaai
+- Nijverheidstraat
+- Ombeekhof
+- Ombeekstraat
+- Oscar Colbrandtstraat
+- Oscar De Reusestraat
+- Oudebareelstraat
+- Palmendreef
+- Paradijsvogelplein
+- Parkietstraat
+- Paul De Ryckstraat
+- Paviljoenweg
+- Philip Blommaertstraat
+- Pimpelmeesstraat
+- Potuitstraat
+- Quinten Metsijsstraat
+- Raaktstraat
+- Reginald Warnefordstraat
+- Regine Beerstraat
+- Rietzangerstraat
+- Rozebroekslag
+- Rozebroekstraat
+- Salviastraat
+- Scaldisstraat
+- Scheldestraat
+- Schildersstraat
+- Schoolstraat
+- Schoolwegel
+- Schuurgoedstraat
+- Schuurstraat
+- Seringendreef
+- Sijsjeslaan
+- Sint-Baafskouterstraat
+- Sint-Bernadettestraat
+- Sint-Dorotheastraat
+- Sleutelbloemstraat
+- Speerdistelstraat
+- Spijkstraat
+- Staf Bruggenstraat
+- Sterrestraat
+- Striemenbergstraat
+- Sulkystraat
+- Theofiel Lybaertstraat
+- Thomas Edisonstraat
+- Tienmeterstraat
+- Toekomststraat
+- Valkenstraat
+- Verbindingstraat
+- Verkortingstraat
+- Victor Braeckmanlaan
+- Vinkenlaan
+- Visitatiestraat
+- Vriendschapstraat
+- Waterdreef
+- Waterdreefpad
+- Waterkluiskaai
+- Waterstraat
+- Westveldpark
+- Westveldstraat
+- Wijmakker
+- Winkelkouterpad
+- Wittemolenstraat
+- Wolterslaan
+- Zavelput
+- Zenobe Grammestraat
+- Zilvermeeuwstraat
+- Zingemkouterstraat
+- Zomerwee
+
+### Sint-Denijs-Westrem
+
+- Adelaarsstraat
+- Adolphe Pégoudlaan
+- Afsneedorp
+- Afsneekouter
+- Afsneekouterwegel
+- Afsneemolenstraat
+- Afsneestraat
+- Amaryllislaan
+- Amelia Earhartlaan
+- Armand Bourdonlaan
+- Autoweg-Noord
+- Autoweg-Zuid
+- Belgiëlaan
+- Beukenlaan
+- Bijenstraat
+- Blazerpad
+- Boesbeeklaan
+- Boesbeekpad
+- Borluutpad
+- Borluutpark
+- Borluutplein
+- Borluutstraat
+- Bovenhove
+- Bressers-Blanchaertlaan
+- Brillandstraat
+- Broekkantstraat
+- Buchtenstraat
+- Buitenring-Sint-Denijs
+- David Tenierslaan
+- Derbystraat
+- Drie Koningenstraat
+- Drie Sleutelsstraat
+- Duddegembosje
+- Duddegemstraat
+- Duiverstraat
+- Emile Andelhofstraat
+- Ernest Claeslaan
+- Ewald Delbaerestraat
+- Ezelstraatje
+- Frans Halslaan
+- Gemeenteplein
+- Gentiaanlaan
+- Geo Verbancklaan
+- Gladioollaan
+- Goedingenstraat
+- Hans Van Wervekestraat
+- Hemelrijkstraat
+- Hemingplein
+- Henri Crombezbrug
+- Henri Crombezlaan
+- Henry Stanleylaan
+- Hogeheerweg
+- Hubert Malfaitlaan
+- Hélène Dutrieulaan
+- Idewallepad
+- James Ensorlaan
+- James Ensorpad
+- Jean-Baptiste de Ghellincklaan
+- Jean-Baptiste de Gieylaan
+- Jeroom Duquesnoylaan
+- Kareelstraat
+- Keistraat
+- Kerkdreef
+- Kerkwegel
+- Kerkwegelpad
+- Kleine Duddegemstraat
+- Kleine Gentstraat
+- Kleine Goedingenstraat
+- Kleinemoortelputstraat
+- Kleinkouterken
+- Kortrijksesteenweg
+- Krijzeltand
+- Kromme Leie
+- Lauwstraat
+- Leieoever
+- Leiepark
+- Leieriggestraat
+- Lekkerlandpad
+- Lepelpad
+- Lettelbroeklaan
+- Lodewijk De Raetstraat
+- Loofblommestraat
+- Louis Blériotbrug
+- Louis Blériotlaan
+- Louis Delebecquelaan
+- Luchthavenlaan
+- Maaltekouter
+- Maaltemeers
+- Maaltenaard
+- Maurice Dewulflaan
+- Meiklokjeslaan
+- Meremsteenpad
+- Meulenbroekstraat
+- Neststraat
+- Nieuwstraat
+- Octaaf Soudanstraat
+- Oudeheerweg
+- Overmeerspad
+- Overmeersstraat
+- Pastorijdreef
+- Pauline Van Pottelsberghelaan
+- Pieter Brueghellaan
+- Pieter Pauwel Rubenslaan
+- Pieter van Reysschootlaan
+- Pleispark
+- Poolse-Winglaan
+- Poortakkerstraat
+- Primulapad
+- Primulastraat
+- Putkapelstraat
+- Putstraat
+- Raymonde de Larochelaan
+- Rijsbrugge
+- Rivierstraat
+- Rogier van der Weydenlaan
+- Rosdamstraat
+- Rozenpad
+- Rozenpark
+- Scheepsankerstraat
+- Schoonzichtstraat
+- Schuttershof
+- Simon Beninglaan
+- Sint-Dionysiusstraat
+- Sint-Rochusplein
+- Sint-Rochusstraat
+- Smalkouterstraat
+- Soenenspark
+- Steenaardestraat
+- Steppestede
+- Stijn Streuvelslaan
+- Surkelbulk
+- Tabakstraatje
+- Tijgerlelielaan
+- Twaalfapostelenstraat
+- Veertienhoekpad
+- Vennebos
+- Vennebospad
+- Vennestraat
+- Veurestraat
+- Vierschaarlaan
+- Wallekenspad
+- Wallekensstraat
+- Wijdebroeken
+- Witbakkerstraat
+- Wittepaalpad
+- Wittepaalstraat
+
+### Sint-Kruis-Winkel
+
+- Albert De Smetstraat
+- Arbedkaai
+- Barkstraat
+- Bokstraat
+- Georges De Baetsplaats
+- Gustaaf Van Heckelaan
+- Hullebusstraat
+- Jaak Janssensstraat
+- John Kennedylaan
+- Jozefienenstraat
+- Kapelledreef
+- Karel Bauwensstraat
+- Karel de Clercqstraat
+- Kattenhoekstraat
+- Knippegroen
+- Marcel Herpelinckstraat
+- Nonnestraat
+- Pleitstraat
+- Rapenburgstraat
+- Schuitstraat
+- Sint-Kruis-Winkeldorp
+- Smaldonkstraat
+- Smishoekstraat
+- Veerpontstraat
+- Winkelwarande
+- Wouterij
+
+### Terdonk
+
+- 't Zand
+- Christoffel Columbuslaan
+- Dordrechtstraat
+- Geuzenhoek
+- James Cookstraat
+- Kuhlmannkaai
+- Kuhlmannlaan
+- Kuhlmannstraat
+- Langerbruggekaai
+- Marco Polostraat
+- Penninckstraat
+- Riemekaai
+- Spiedamstraat
+- Terdonkkaai
+- Terdonkplein
+- Twaalfroeden
+- Vasco da Gamalaan
+- Willem van Rubroeckstraat
+- Zuidledeplein
+
+### Wondelgem
+
+- Aalbessenlaan
+- Aalscholverstraat
+- Appelterepad
+- Benninsbrugstraat
+- Biesbilkpad
+- Biesbilkstraat
+- Biezenstraat
+- Bijlken
+- Bisschopsbos
+- Blauwbloempad
+- Blauwstraat
+- Bloembilkstraat
+- Bosuilstraat
+- Boterbloemlaan
+- Botestraat
+- Braambezielaan
+- Bremstraat
+- Buntstraat
+- Dasstraat
+- Dennenlaan
+- Dikkelindestraat
+- Durmmeersplein
+- Durmmeersstraat
+- Egelstraat
+- Eksmere
+- Eksterstraat
+- Elza Darcielstraat
+- Elzeboomlaan
+- Emmanuel de Turcqplein
+- Euphrasie Verbrugghepad
+- Evergemsesteenweg
+- Eversteinlaan
+- Fabriekstraat
+- Frans Louwersstraat
+- Françoise Jeanne Ridderboschstraat
+- Galnootlaan
+- Gaverbulk
+- Gaverstraat
+- Geelgorsstraat
+- Gentseaardeweg
+- Georgette Leblancpad
+- Gerty Corihof
+- Grensstraat
+- Groenplein
+- Gundlichstraat
+- Haagbeuklaan
+- Haagstuk
+- Hagedoornlaan
+- Hazenlaan
+- Heemstraat
+- Heinakker
+- Helmkruidpad
+- Helmkruidstraat
+- Henri Meulemanstraat
+- Hoevestraat
+- Holmerestraat
+- Hoornbladstraat
+- Houtjen
+- Ijsvogelstraat
+- Industrieweg
+- Irène Joliotstraat
+- Isala Van Dieststraat
+- Jeanne Pipynstraat
+- Kalkoenlaan
+- Kamperfoelielaan
+- Kanariestraat
+- Karekietlaan
+- Katwilgenstraat
+- Kerkuilstraat
+- Kiekenbosstraat
+- Kineastlaan
+- Klimoplaan
+- Knabbelare
+- Knotwilgenlaan
+- Kolegemstraat
+- Korenveldstraat
+- Korte Kerkstraat
+- Krommebunderstraat
+- Kwaadveld
+- Kweepeerstraat
+- Kwikstaartlaan
+- Langebilkstraat
+- Langeveld
+- Lariksstraat
+- Liefbilkstraat
+- Liefkensstraat
+- Lindemeers
+- Lindestuk
+- Lisbeth Verwestpad
+- Lisdoddestraat
+- Loekie Zvonikstraat
+- Lothariusstraat
+- Lucie Dejardinpad
+- Lusthoflaan
+- Maarkpad
+- Marcastraat
+- Marguerite Yourcenarpad
+- Maria Baerspad
+- Maria Baersstraat
+- Marie Curiestraat
+- Marmotstraat
+- Martha De Clercqstraat
+- Marthe Boëlstraat
+- May Sartonstraat
+- Meerkoetlaan
+- Meesjesstraat
+- Meikeverlaan
+- Meulenbilkstraat
+- Moerbezielaan
+- Molenstraat
+- Molenwalstraat
+- Morekstraat
+- Oogststraat
+- Oude Akker
+- Paardekastanjestraat
+- Philippus van der Nootstraat
+- Pieter Cieterslaan
+- Pieter Van Vyncktstraat
+- Pijlkruidstraat
+- Poortbilk
+- Ravenstraat
+- Rietveld
+- Rijshoutstraat
+- Ringvaartweg-Wondelgem
+- Roodborstjesstraat
+- Ruienhovestraat
+- Ruiterlaan
+- Sarah Bernhardtpad
+- Schaapherderstraat
+- Schaapsdoornstraat
+- Schaloenstraat
+- Schildpadstraat
+- Schouwingstraat
+- Serafien Van Cauwenbergelaan
+- Sint-Godelievestraat
+- Sint-Markoenstraat
+- Sint-Sebastiaanstraat
+- Sneeuwklokjeslaan
+- Sparappellaan
+- Spechtstraat
+- Spesbroekstraat
+- Spoorwegstraat
+- Sprinkhaanlaan
+- Spurriestraat
+- Stenenkruis
+- Ter Durmenpark
+- Tijmstraat
+- Uitvangstraat
+- Valeriaanstraat
+- Varenstraat
+- Viaductstraat
+- Vierweegsestraat
+- Vinkeslagstraat
+- Vledermuisstraat
+- Voormeers
+- Vroonstalledries
+- Vroonstallestraat
+- Vrouwenstraat
+- Waalbrugstraat
+- Waterhoenlaan
+- Waterlelielaan
+- Watermuntstraat
+- Watersnepstraat
+- Wedauwen
+- Westergemstraat
+- Wezelstraat
+- Willy Maststraat
+- Winkelgate
+- Winkelstraat
+- Woestijnegoedlaan
+- Wondelgemstationplein
+- Yvonne Desirantstraat
+- Zandstraat
+- Zeeschipstraat
+- Zegher Neytpad
+- Zilverberklaan
+- Zwanebloemstraat
+- Zwembadstraat
+
+### Zwijnaarde
+
+- Achterhekers
+- Achterhekerspad
+- Adolphe della Faillelaan
+- Begoniapad
+- Begoniastraat
+- Bekpad
+- Biermannekenspad
+- Bollebergen
+- Bonte Mantelstraat
+- Bottelroospad
+- Bottelroosstraat
+- Buitenring-Zwijnaarde
+- Campusstraat
+- Cornelis de Schepperestraat
+- Cyrille Van de Veegaetestraat
+- Dagmaalhof
+- Dagmaalpad
+- Den Holland
+- Dorpsstraat
+- Eedpad
+- Eedstraat
+- Eggestraat
+- Ekerpad
+- Etienne della Faillepark
+- Gebuurtestraat
+- Geizegemstraat
+- Gemberstraat
+- Grotesteenweg-Noord
+- Grotesteenweg-Zuid
+- Halfbunder
+- Halfbunderpad
+- Heerweg-Noord
+- Heerweg-Zuid
+- Heindriesstraat
+- Heistraat
+- Hekers
+- Hertooie
+- Hertooiebos
+- Hofakkerpad
+- Hofakkerstraat
+- Hondelee
+- Hondeleepad
+- Hulststraat
+- Hutsepotstraat
+- Huttestraat
+- Industriepark-Zwijnaarde
+- Isabella van Oostenrijkstraat
+- Jan Sonnevillepad
+- Jan Sonnevillestraat
+- Joachim Schayckstraat
+- Kappetragel
+- Kelderijstraat
+- Klaartestraat
+- Klaasbulkstraat
+- Klossebos
+- Klossestraat
+- Krekelstraat
+- Langeplankstraat
+- Langeplankweg
+- Laurierstraat
+- Leebeekstraat
+- Leenpad
+- Maaltemeers
+- Mantelhof
+- Mattestede
+- Mijlgrachtstraat
+- Muizenbulkpad
+- Nederzwijnaarde
+- Nieuwescheldestraat
+- Oudescheldebrug
+- Oudespoorweg
+- Pleispark
+- Prelaatsdreef
+- Remi Vlerickstraat
+- Rijvisschepark
+- Rijvisschestraat
+- Rooskenstraat
+- Schaarkenstraat
+- Scheldehout
+- Scheldekanaaltragel
+- Sneeuwbespad
+- Sneeuwbesstraat
+- Technologiepark-Zwijnaarde
+- Ten Bos
+- Ten Bospad
+- Ten Hulle
+- Ter Linden
+- Ter Lindenpad
+- Tramstraat
+- Tweebekenstraat
+- Victor Loreinstraat
+- Vier-Gekroondenpad
+- Vier-Gekroondenstraat
+- Vogelheide
+- Weverijpad
+- Wintervijverpad
+- Wintervijverstraat
+- Wittebroodhof
+- Zandvoordestraat
+- Zomerweibrug
+- Zonnedauwpad
+- Zonnedauwstraat
+- Zonneputtragel
+- Zwartekobenpad
+- Zwartekobenstraat
+- Zwijnaardemeerspad

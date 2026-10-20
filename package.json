@@ -1,0 +1,40 @@
+{
+  "name": "transcraiber2",
+  "version": "1.0.0",
+  "description": "Verbetert automatische transcripties van Gentse gemeenteraden en commissies met skills, referentielijsten en agenda-context (OpenRouter + SQLite).",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stevendeporre123/transcraiber2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stevendeporre123/transcraiber2/issues"
+  },
+  "homepage": "https://github.com/stevendeporre123/transcraiber2#readme",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.13.2",
+    "datatables.net-bs5": "^3.1.4",
+    "diff": "^9.0.0",
+    "docx": "^9.13.0",
+    "express": "^5.3.0",
+    "jquery": "^3.7.1",
+    "mammoth": "^1.13.0",
+    "multer": "^2.4.0",
+    "pdfkit": "^0.20.2",
+    "unpdf": "^1.9.1"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  }
+}

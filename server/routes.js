@@ -57,6 +57,8 @@ crud('terms', 'terms', ['categorie', 'varianten', 'correct', 'toelichting', 'bro
 crud('streets', 'streets', ['naam', 'deelgemeente'], { order: 'naam', onChange: invalidateStreets });
 crud('commissies', 'commissies', ['code', 'naam', 'schepenen', 'voorzitter'], { order: 'code' });
 
+api.get('/health', (req, res) => res.json({ ok: true }));
+
 api.get('/meta', (req, res) => {
   res.json({
     termCategories: TERM_CATEGORIES,

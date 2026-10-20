@@ -20,6 +20,44 @@ uitvoerformaat volgt). Testen: `npm test`.
 Vereist Node.js 20 of nieuwer. De front-end-bibliotheken (Bootstrap, DataTables,
 jQuery) worden vanuit `node_modules` geserveerd, er is geen CDN nodig.
 
+## Productie: Docker + Cloudflare Tunnel (transcraiber.smartergrp.com)
+
+De app draait in Docker op de `ubuntu-docker`-host; `cloudflared` publiceert hem via een
+Cloudflare Tunnel. Er staan geen poorten open naar buiten. Databank, uploads en
+exports staan in het volume `transcraiber-data`.
+
+### 1. Tunnel aanmaken (Cloudflare-dashboard)
+1. **Zero Trust → Networks → Tunnels → Create a tunnel** → type *Cloudflared*, naam `transcraiber`.
+2. Kies *Docker* bij de installatie en kopieer het **token** (de lange string na `--token`).
+3. **Public Hostname** toevoegen:
+   - Subdomain `transcraiber`, domain `smartergrp.com`
+   - Service: **HTTP** → `app:3000` (de servicenaam uit `docker-compose.yml`)
+   - Onder *Additional settings → HTTP Settings*: niets nodig.
+
+### 2. Toegang beveiligen (verplicht: de app heeft geen eigen login)
+**Zero Trust → Access → Applications → Add an application → Self-hosted**
+- Domain: `transcraiber.smartergrp.com`
+- Policy: *Allow* voor jouw e-mailadres(sen) of je domein (`@smartergrp.com`), login via
+  One-time PIN of Google.
+
+### 3. Installeren op ubuntu-docker
+```bash
+git clone https://github.com/stevendeporre123/transcraiber2.git
+cd transcraiber2
+cp .env.example .env
+nano .env        # CLOUDFLARE_TUNNEL_TOKEN=… en optioneel OPENROUTER_API_KEY=…
+docker compose up -d --build
+docker compose logs -f     # "Registered tunnel connection" + "Transcraiber draait op…"
+```
+
+### Bijwerken, back-up
+```bash
+git pull && docker compose up -d --build                     # nieuwe versie
+docker run --rm -v transcraiber2_transcraiber-data:/data -v "$PWD":/backup alpine \
+  tar czf /backup/transcraiber-data-$(date +%F).tgz -C /data .   # back-up van het volume
+```
+(De volumenaam begint met de mapnaam; controleer met `docker volume ls`.)
+
 ## Werking
 
 ```

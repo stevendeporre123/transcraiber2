@@ -1,0 +1,31 @@
+# Transcraiber + Cloudflare Tunnel
+# Gebruik: zet CLOUDFLARE_TUNNEL_TOKEN (en optioneel OPENROUTER_API_KEY) in .env, dan: docker compose up -d --build
+services:
+  app:
+    build: .
+    image: transcraiber:latest
+    container_name: transcraiber
+    restart: unless-stopped
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - PORT=3000
+      - DATA_DIR=/data
+    volumes:
+      - transcraiber-data:/data
+    # Geen poorten naar buiten: enkel bereikbaar via de tunnel.
+    # Lokaal testen? Haal de # weg:
+    # ports:
+    #   - "3000:3000"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: transcraiber-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:?Zet CLOUDFLARE_TUNNEL_TOKEN in .env}
+    depends_on:
+      - app
+
+volumes:
+  transcraiber-data:

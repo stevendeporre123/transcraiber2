@@ -1,6 +1,7 @@
-# Transcraiber + Cloudflare Tunnel
-# Gebruik: zet CLOUDFLARE_TUNNEL_TOKEN (en optioneel OPENROUTER_API_KEY) in .env, dan: docker compose up -d --build
-# Tunnel-service in Cloudflare: HTTP → transcraiber:3000
+# Transcraiber op ubuntu-docker-pdb12
+# Hangt aan het bestaande Docker-netwerk "proxy", waar ook de container "cloudflare-tunnel" op zit.
+# In de bestaande tunnel (Public Hostname transcraiber.smartergrp.com): HTTP → transcraiber:3000
+# Gebruik: docker compose up -d --build
 name: transcraiber
 
 services:
@@ -16,27 +17,18 @@ services:
     volumes:
       - transcraiber-data:/data
     networks:
-      - transcraiber-net
-    # Geen poorten naar buiten: enkel bereikbaar via de tunnel.
-    # Lokaal testen op de host? Haal de # weg (hostpoort naar keuze):
+      - proxy
+    labels:
+      # lokaal gebouwd image: watchtower moet dit niet proberen te updaten
+      - com.centurylinklabs.watchtower.enable=false
+    # Geen hostpoort nodig: de tunnel bereikt de container via het proxy-netwerk.
+    # Lokaal testen op de host? Haal de # weg:
     # ports:
     #   - "3210:3000"
 
-  transcraiber-tunnel:
-    image: cloudflare/cloudflared:latest
-    container_name: transcraiber-tunnel
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:?Zet CLOUDFLARE_TUNNEL_TOKEN in .env}
-    networks:
-      - transcraiber-net
-    depends_on:
-      - transcraiber
-
 networks:
-  transcraiber-net:
-    name: transcraiber-net
+  proxy:
+    external: true
 
 volumes:
   transcraiber-data:

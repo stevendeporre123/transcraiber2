@@ -31,7 +31,7 @@ exports staan in het volume `transcraiber-data`.
 2. Kies *Docker* bij de installatie en kopieer het **token** (de lange string na `--token`).
 3. **Public Hostname** toevoegen:
    - Subdomain `transcraiber`, domain `smartergrp.com`
-   - Service: **HTTP** → `app:3000` (de servicenaam uit `docker-compose.yml`)
+   - Service: **HTTP** → `transcraiber:3000` (containernaam op het eigen netwerk `transcraiber-net`)
    - Onder *Additional settings → HTTP Settings*: niets nodig.
 
 ### 2. Toegang beveiligen (verplicht: de app heeft geen eigen login)
@@ -53,10 +53,9 @@ docker compose logs -f     # "Registered tunnel connection" + "Transcraiber draa
 ### Bijwerken, back-up
 ```bash
 git pull && docker compose up -d --build                     # nieuwe versie
-docker run --rm -v transcraiber2_transcraiber-data:/data -v "$PWD":/backup alpine \
+docker run --rm -v transcraiber-data:/data -v "$PWD":/backup alpine \
   tar czf /backup/transcraiber-data-$(date +%F).tgz -C /data .   # back-up van het volume
 ```
-(De volumenaam begint met de mapnaam; controleer met `docker volume ls`.)
 
 ## Werking
 

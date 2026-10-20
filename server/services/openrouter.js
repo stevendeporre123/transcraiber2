@@ -1,5 +1,5 @@
 import { config } from '../config.js';
-import { getSetting } from '../db.js';
+import { getSetting, getNumberSetting } from '../db.js';
 import { mockCompletion } from './mock-llm.js';
 
 const BASE = 'https://openrouter.ai/api/v1';
@@ -28,7 +28,7 @@ export async function complete({ model, system, user, temperature, json = false,
   const body = {
     model,
     messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
-    temperature: temperature ?? Number(getSetting('temperature', '0.1')),
+    temperature: temperature ?? getNumberSetting('temperature', 0.1, 0, 2),
     usage: { include: true },
   };
   if (maxTokens) body.max_tokens = maxTokens;
@@ -48,7 +48,7 @@ export async function complete({ model, system, user, temperature, json = false,
           'X-Title': 'Transcraiber',
         },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(Number(getSetting('timeout_s', '600')) * 1000),
+        signal: AbortSignal.timeout(getNumberSetting('timeout_s', 600, 30, 3600) * 1000),
       });
     } catch (e) { lastErr = e; continue; }
     const data = await res.json().catch(() => ({}));

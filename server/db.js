@@ -170,9 +170,16 @@ CREATE INDEX IF NOT EXISTS idx_terms_cat ON terms(categorie);
 CREATE INDEX IF NOT EXISTS idx_blocks_ord ON run_blocks(run_id, ord);
 `);
 
+/** Leeg of null opgeslagen = niet ingesteld → fallback. */
 export function getSetting(key, fallback = null) {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
-  return row ? row.value : fallback;
+  return row && row.value != null && String(row.value).trim() !== '' ? row.value : fallback;
+}
+
+/** Numerieke instelling binnen grenzen; ongeldig of leeg → fallback. */
+export function getNumberSetting(key, fallback, min = -Infinity, max = Infinity) {
+  const n = Number(getSetting(key));
+  return Number.isFinite(n) && n >= min && n <= max && getSetting(key) != null ? n : fallback;
 }
 
 export function setSetting(key, value) {

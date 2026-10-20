@@ -1,6 +1,6 @@
 // Orkestratie: intake → normalizer → cleaner → resolver → writer.
 // Elke modelaanroep wordt per (run, stap, deel) bewaard, zodat een mislukte run hervat kan worden.
-import { db, json, getSetting } from '../db.js';
+import { db, json, getSetting, getNumberSetting } from '../db.js';
 import { STEPS } from '../config.js';
 import { complete, defaultModel, parseJsonLoose } from './openrouter.js';
 import { buildSystemPrompt } from './context.js';
@@ -50,9 +50,9 @@ async function callStep(ctx, step, chunk, { user, refText, isJson = false, valid
     try {
       res = await complete({ model, system, user: prompt, json: isJson });
     } catch (e) {
-      lastErr = e;
-      if (/API-key|401|402|403/.test(e.message)) throw e;
-      continue;
+      // Geen antwoord van het model (timeout, netwerk, quota, onbekend model): niet stil de
+      // ruwe tekst doorgeven, maar de run laten mislukken zodat hij hervat kan worden.
+      throw new Error(`${STEPS[step].label} deel ${chunk + 1} (${model}): ${e.message}`);
     }
     const save = (status, warnings) => db.prepare(`INSERT INTO run_steps (run_id, step, chunk, model, input, output, tokens_in, tokens_out, cost, ms, status, warnings)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -386,8 +386,8 @@ export async function runPipeline(runId) {
   const meeting = db.prepare('SELECT * FROM meetings WHERE id = ?').get(run.meeting_id);
   const opt = json(run.options, {});
   const options = {
-    chunkWords: Number(opt.chunkWords) || Number(getSetting('chunk_words', '2000')),
-    concurrency: Number(opt.concurrency) || Number(getSetting('concurrency', '3')),
+    chunkWords: Number(opt.chunkWords) >= 200 ? Number(opt.chunkWords) : getNumberSetting('chunk_words', 2000, 200, 20000),
+    concurrency: Number(opt.concurrency) >= 1 ? Number(opt.concurrency) : getNumberSetting('concurrency', 3, 1, 10),
     writer: opt.writer !== false,
     llmIntake: !!opt.llmIntake,
   };

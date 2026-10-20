@@ -112,3 +112,16 @@ test('straten: voorselectie vindt STT-varianten', () => {
   assert.ok(names.includes('Nekkersberglaan'));
   assert.ok(names.includes('Dendermondsesteenweg'));
 });
+
+test('instellingen: leeg/null opgeslagen = standaardwaarde (bug: timeout 0, concurrency 0)', async () => {
+  const { setSetting, getSetting, getNumberSetting } = await import('../server/db.js');
+  setSetting('timeout_s', null);
+  setSetting('concurrency', '');
+  assert.equal(getSetting('timeout_s', '600'), '600');
+  assert.equal(getNumberSetting('timeout_s', 600, 30, 3600), 600);
+  assert.equal(getNumberSetting('concurrency', 3, 1, 10), 3);
+  setSetting('concurrency', '0');
+  assert.equal(getNumberSetting('concurrency', 3, 1, 10), 3, 'buiten grenzen → fallback');
+  setSetting('temperature', '0');
+  assert.equal(getNumberSetting('temperature', 0.1, 0, 2), 0, '0 is een geldige temperatuur');
+});

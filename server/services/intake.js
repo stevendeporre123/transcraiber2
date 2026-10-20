@@ -108,7 +108,25 @@ export function blocksFromText(pages) {
     p = p.replace(LEADING_TIME, '');
     for (const piece of splitLong(p)) blocks.push({ speaker_raw: speaker, text: piece, t_start: null, t_end: null });
   }
-  return { blocks: finalize(blocks), notes: { labels, removed } };
+  const merged = mergeSmall(blocks);
+  return { blocks: finalize(merged), notes: { labels, removed, paragraphs: blocks.length } };
+}
+
+/**
+ * Automatische ondertitels geven vaak heel korte stukjes ("Want uiteindelijk.").
+ * Voeg opeenvolgende stukken van dezelfde spreker samen tot ~SOFT_MAX woorden,
+ * afgesloten op een zinseinde (nooit boven HARD_MAX).
+ */
+export function mergeSmall(blocks) {
+  const out = [];
+  for (const b of blocks) {
+    const cur = out[out.length - 1];
+    const words = cur ? wordCount(cur.text) : 0;
+    const full = cur && (words + wordCount(b.text) > HARD_MAX || (words >= SOFT_MAX && ENDS_SENTENCE.test(cur.text)));
+    if (cur && cur.speaker_raw === b.speaker_raw && !full) cur.text += ' ' + b.text;
+    else out.push({ ...b });
+  }
+  return out;
 }
 
 function splitLong(text) {

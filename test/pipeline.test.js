@@ -69,3 +69,51 @@ test('hervatten: manuele aanpassing blijft behouden bij opnieuw vanaf writer', a
 test('geen VTT zonder tijdcodes', () => {
   assert.throws(() => toVtt({ hasTimecodes: false, blocks: [] }), /tijdcodes/);
 });
+
+test('debug-log: elke fase en modelaanroep wordt gelogd, met systeemprompt bewaard', () => {
+  const run = db.prepare('SELECT * FROM runs ORDER BY id').get();
+  const rows = db.prepare('SELECT level, step, message, data FROM run_log WHERE run_id = ?').all(run.id);
+  const msgs = rows.map((r) => r.message).join('\n');
+  assert.match(msgs, /start run/);
+  assert.match(msgs, /blokken, \d+ woorden/);
+  assert.match(msgs, /aanroep mock|aanroep .* \(skill gentse-normalizer/);
+  assert.match(msgs, /analyse uitvoer/);
+  assert.match(msgs, /run klaar/);
+  const call = rows.find((r) => r.step === 'normalizer' && /aanroep/.test(r.message));
+  assert.ok(JSON.parse(call.data).referenties.some((x) => /^leden: \d+ tekens/.test(x)), 'referentiegrootte gelogd');
+  const analyse = rows.find((r) => r.step === 'normalizer' && r.message === 'analyse uitvoer');
+  assert.ok(JSON.parse(analyse.data).vervangingen.some((v) => /nieuw gent → Nieuw-Gent|gent → Nieuw-Gent/i.test(v)), 'vervangingen gelogd');
+  const step = db.prepare("SELECT system FROM run_steps WHERE run_id = ? AND step = 'normalizer'").get(run.id);
+  assert.match(step.system, /# REFERENTIE: LEDEN/);
+});
+
+test('testrun: enkel blokken 3-5 en stoppen na de normalizer', async () => {
+  const m = db.prepare('SELECT * FROM meetings ORDER BY id').get();
+  const r = db.prepare('INSERT INTO runs (meeting_id, options) VALUES (?, ?)').run(m.id, JSON.stringify({ blockFrom: 3, blockTo: 5, stopAfter: 'normalizer' }));
+  await runPipeline(r.lastInsertRowid);
+  const run = db.prepare('SELECT * FROM runs WHERE id = ?').get(r.lastInsertRowid);
+  assert.equal(run.status, 'klaar', run.error);
+  const blocks = db.prepare('SELECT block_id FROM run_blocks WHERE run_id = ?').all(run.id).map((b) => b.block_id);
+  assert.deepEqual(blocks, ['B003', 'B004', 'B005']);
+  const steps = db.prepare('SELECT DISTINCT step FROM run_steps WHERE run_id = ?').all(run.id).map((s) => s.step);
+  assert.deepEqual(steps, ['normalizer']);
+});
+
+test('testbank: skill testen met concepttekst, analyse per blok', async () => {
+  const { runTest, meetingBlocks } = await import('../server/services/testbench.js');
+  const m = db.prepare('SELECT * FROM meetings ORDER BY id').get();
+  const mb = await meetingBlocks(m.id, 300);
+  assert.ok(mb.chunks.length > 1);
+  const input = mb.blocks.slice(0, 4).map((b) => `## ${b.id} | spreker: ${b.speaker || '?'}\n${b.text}`).join('\n\n');
+  const skill = db.prepare("SELECT content FROM skills WHERE naam = 'gentse-normalizer'").get().content;
+  const [res] = await runTest({ step: 'normalizer', input, models: ['x/y'], skillContent: skill + '\nExtra regel.', meetingId: m.id });
+  assert.equal(res.error, undefined);
+  assert.equal(res.analysis.kind, 'blocks');
+  assert.equal(res.analysis.stats.in, 4);
+  assert.equal(res.analysis.stats.gewijzigd, 4);
+  assert.ok(res.validation.ok);
+  assert.match(res.system, /Extra regel\./);
+  const row = db.prepare('SELECT skill_draft FROM test_runs WHERE id = ?').get(res.id);
+  assert.equal(row.skill_draft, 1);
+  assert.ok(db.prepare('SELECT COUNT(*) n FROM run_log WHERE test_id = ?').get(res.id).n >= 2);
+});

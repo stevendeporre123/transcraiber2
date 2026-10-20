@@ -180,20 +180,34 @@ const REF_TITLES = {
 };
 export const REF_KEYS = Object.keys(REF_TITLES);
 
-/** Systeemprompt = skilltekst (zonder frontmatter) + gevraagde referenties. */
-export function buildSystemPrompt(skill, { meeting, text } = {}) {
+/**
+ * Systeemprompt = skilltekst (zonder frontmatter) + gevraagde referenties.
+ * Geeft { system, refs } terug; refs beschrijft per referentie of en hoe groot ze meeging (voor debug).
+ */
+export function buildPrompt(skill, { meeting, text } = {}) {
   const body = skill.content.replace(/^---\n[\s\S]*?\n---\n?/, '').trim();
   const parts = [body];
+  const refs = [];
   for (const ref of json(skill.refs, [])) {
     let content = null;
+    let note = '';
     if (ref === 'leden') content = renderLeden();
     else if (ref === 'bevoegdheden') content = renderBevoegdheden();
     else if (ref === 'terminologie') content = renderTerminologie();
-    else if (ref === 'straten') content = text ? renderStraten(text) : null;
-    else if (ref === 'agenda') content = renderAgenda(meeting);
-    else if (ref === 'vergadering') content = renderVergadering(meeting);
+    else if (ref === 'straten') {
+      content = text ? renderStraten(text) : null;
+      note = content ? `${content.split('\n').length} kandidaat-straten` : 'geen straten herkend in de tekst';
+    } else if (ref === 'agenda') {
+      content = renderAgenda(meeting);
+      if (!content) note = meeting?.agenda_name ? `agenda niet uitgelezen (status: ${meeting.agenda_status || '?'})` : 'geen agenda opgeladen';
+    } else if (ref === 'vergadering') content = renderVergadering(meeting);
     else if (ref === 'pipeline') content = db.prepare("SELECT content FROM skills WHERE naam = 'verslag-pipeline'").get()?.content;
+    refs.push({ ref, included: !!content, chars: content ? content.length : 0, lines: content ? content.split('\n').length : 0, note });
     if (content) parts.push(`# REFERENTIE: ${REF_TITLES[ref] || ref.toUpperCase()}\n\n${content}`);
   }
-  return parts.join('\n\n---\n\n');
+  return { system: parts.join('\n\n---\n\n'), refs, skillChars: body.length };
+}
+
+export function buildSystemPrompt(skill, opts) {
+  return buildPrompt(skill, opts).system;
 }

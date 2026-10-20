@@ -18,6 +18,20 @@ function runOptionsHtml(prefix, opts = {}) {
           <label class="form-check-label" for="${prefix}-llmi" title="Enkel voor rommelige PDF/DOCX zonder duidelijke structuur">Intake via LLM</label></div>
       </div>
     </div>
+    <details class="mt-3" ${opts.blockFrom || opts.blockTo || (opts.stopAfter && opts.stopAfter !== 'writer') ? 'open' : ''}><summary class="fw-semibold">Testrun: deel van de input / stoppen na een stap</summary>
+      <div class="row g-2 mt-1">
+        <div class="col-md-3"><label class="form-label small mb-0">Enkel blokken van</label>
+          <input type="number" min="1" class="form-control form-control-sm" name="blockFrom" value="${App.esc(opts.blockFrom || '')}" placeholder="1"></div>
+        <div class="col-md-3"><label class="form-label small mb-0">tot en met</label>
+          <input type="number" min="1" class="form-control form-control-sm" name="blockTo" value="${App.esc(opts.blockTo || '')}" placeholder="alles"></div>
+        <div class="col-md-6"><label class="form-label small mb-0">Stoppen na</label>
+          <select class="form-select form-select-sm" name="stopAfter">
+            ${[['writer', 'volledige pipeline'], ['normalizer', 'gentse-normalizer'], ['cleaner', 'transcript-cleaner'], ['resolver', 'speaker-resolver']]
+              .map(([v, l]) => `<option value="${v}" ${(opts.stopAfter || 'writer') === v ? 'selected' : ''}>${l}</option>`).join('')}
+          </select></div>
+      </div>
+      <div class="form-text">Blokken bekijk je in de <a href="testen.html">Testbank</a>. Voor één skill op een klein stuk is de Testbank sneller.</div>
+    </details>
     <details class="mt-3" ${opts.models ? 'open' : ''}><summary class="fw-semibold">Modellen per stap (OpenRouter)</summary>
       <div class="row g-2 mt-1">
         ${steps.map(([k, l]) => `<div class="col-md-4"><label class="form-label small mb-0">${l}</label>
@@ -31,7 +45,13 @@ function readRunOptions(form) {
   const f = App.readForm(form);
   const models = {};
   for (const [k, v] of Object.entries(f)) if (k.startsWith('model_') && v) models[k.slice(6)] = v;
-  return { label: f.label, options: { chunkWords: Number(f.chunkWords) || undefined, writer: !!f.writer, llmIntake: !!f.llmIntake, models } };
+  return {
+    label: f.label,
+    options: {
+      chunkWords: Number(f.chunkWords) || undefined, writer: !!f.writer, llmIntake: !!f.llmIntake, models,
+      blockFrom: Number(f.blockFrom) || undefined, blockTo: Number(f.blockTo) || undefined, stopAfter: f.stopAfter || 'writer',
+    },
+  };
 }
 
 function modelsSummary(opt) {

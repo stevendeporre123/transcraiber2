@@ -166,11 +166,50 @@ CREATE TABLE IF NOT EXISTS corrections (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Debug-log per run (ook naar stdout / docker logs)
+CREATE TABLE IF NOT EXISTS run_log (
+  id INTEGER PRIMARY KEY,
+  run_id INTEGER REFERENCES runs(id) ON DELETE CASCADE,
+  test_id INTEGER,
+  ts TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')),
+  level TEXT NOT NULL DEFAULT 'info',   -- debug, info, warn, error
+  step TEXT,
+  chunk INTEGER,
+  message TEXT NOT NULL,
+  data TEXT
+);
+
+-- Testbank: losse skill-tests op een stuk input
+CREATE TABLE IF NOT EXISTS test_runs (
+  id INTEGER PRIMARY KEY,
+  meeting_id INTEGER REFERENCES meetings(id) ON DELETE SET NULL,
+  step TEXT NOT NULL,
+  model TEXT,
+  skill_version INTEGER,
+  skill_draft INTEGER NOT NULL DEFAULT 0,
+  label TEXT,
+  input TEXT,
+  system TEXT,
+  output TEXT,
+  analysis TEXT,
+  tokens_in INTEGER, tokens_out INTEGER, cost REAL, ms INTEGER,
+  error TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_terms_cat ON terms(categorie);
+CREATE INDEX IF NOT EXISTS idx_log_run ON run_log(run_id, id);
 CREATE INDEX IF NOT EXISTS idx_blocks_ord ON run_blocks(run_id, ord);
 `);
 
 /** Leeg of null opgeslagen = niet ingesteld → fallback. */
+// Kolommen die later toegevoegd zijn (bestaande databanken bijwerken)
+const addColumn = (table, col, def) => {
+  if (!db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+};
+addColumn('run_steps', 'system', 'TEXT');
+addColumn('run_steps', 'attempts', 'INTEGER');
+
 export function getSetting(key, fallback = null) {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
   return row && row.value != null && String(row.value).trim() !== '' ? row.value : fallback;

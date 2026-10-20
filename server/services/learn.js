@@ -28,22 +28,36 @@ export function addTermProposal({ categorie, correct, varianten = '', toelichtin
   return r.lastInsertRowid;
 }
 
-/** Woorddiff tussen oud en nieuw: lijst van {before, after} vervangingen (voor het voorstel "onthoud als term"). */
+/**
+ * Woorddiff tussen oud en nieuw: lijst van {before, after} vervangingen (voor "onthoud als term" en het log).
+ * Wijzigingen die enkel door spaties gescheiden zijn, worden één vervanging ("nieuw gent" → "Nieuw-Gent").
+ */
 export function replacementsFromEdit(before, after) {
   const parts = diffWordsWithSpace(String(before || ''), String(after || ''));
   const out = [];
+  let cur = null;
+  const flush = () => {
+    if (cur) {
+      const r = { before: cur.before.replace(/\s+/g, ' ').trim(), after: cur.after.replace(/\s+/g, ' ').trim() };
+      if (r.before !== r.after && (r.before || r.after)) out.push(r);
+    }
+    cur = null;
+  };
   for (let i = 0; i < parts.length; i++) {
     const p = parts[i];
-    if (p.removed && parts[i + 1]?.added) {
-      out.push({ before: p.value.trim(), after: parts[i + 1].value.trim() });
-      i++;
-    } else if (p.added && !p.removed) {
-      out.push({ before: '', after: p.value.trim() });
-    } else if (p.removed) {
-      out.push({ before: p.value.trim(), after: '' });
+    if (p.added || p.removed) {
+      cur = cur || { before: '', after: '' };
+      if (p.removed) cur.before += p.value;
+      else cur.after += p.value;
+    } else if (cur && /^\s+$/.test(p.value) && (parts[i + 1]?.added || parts[i + 1]?.removed)) {
+      cur.before += p.value;
+      cur.after += p.value;
+    } else {
+      flush();
     }
   }
-  return out.filter((r) => r.before || r.after);
+  flush();
+  return out;
 }
 
 export function recordCorrection({ runId, blockId, field, before, after, lesson }) {

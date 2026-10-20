@@ -90,11 +90,30 @@ export: de code plakt de letterlijke, opgeschoonde tekst per punt ─► PDF, DO
 |---|---|
 | Transcripties | opladen (transcript, agenda, orgaan, commissie, datum, voorzitter), modellen per stap kiezen, runs volgen, opnieuw verwerken met een ander model, twee runs vergelijken |
 | Resultaat | verslag lezen en per blok aanpassen (tekst, spreker, punt), exporteren, agenda, stappen met tokens en kosten, input en output van elke modelaanroep |
+| Testbank | één skill testen op een klein stuk input (een deel of blokbereik uit een vergadering, of eigen tekst), met tot 3 modellen naast elkaar en een concept-skilltekst die je test vóór je ze opslaat. Per blok zie je wat het model veranderde, of de pipeline de uitvoer zou aanvaarden, en de volledige prompt. De uitvoer geef je met één klik door aan de volgende skill |
 | Skills | skills bewerken met versiebeheer en diff, referenties per skill aanvinken, **skill-assistent** (promptvenster in gewone taal), correcties uit de output |
 | Raadsleden | CRUD voor leden, schepenen (bevoegdheden en trefwoorden) en commissies (met voorzitter) |
 | Gentse context | CRUD voor terminologie, STT-vervormingen, actuele projecten en richtlijnen; voorstellen goedkeuren |
 | Straten | de officiële stratenlijst (2961 straten) |
 | Instellingen | API-key, standaardmodel per stap, temperatuur, grootte van de delen, parallelle aanroepen |
+
+## Debug-log
+
+Elke run schrijft een log (tabblad **Debug-log** op de resultaatpagina, download als
+`log.txt`, en ook in `docker logs transcraiber`):
+- start: vergadering, opties, modellen, skillversies;
+- intake: aantal blokken en woorden, sprekerlabels, eerste blokken;
+- per modelaanroep: model, skillversie, grootte van de systeemprompt en van elke
+  referentie (en welke **niet** meegestuurd werd, bv. geen agenda), tokens, tijd, kost;
+- per antwoord een analyse: hoeveel blokken gewijzigd, **welke woorden vervangen werden**
+  (`B004: Bracken → Bracke`), notities, sprekertoewijzing per blok;
+- validatie, nieuwe pogingen, teruggedraaide delen en fouten.
+
+Bij elke stap wordt ook de volledige systeemprompt bewaard (Stappen & kosten → klik op een rij).
+Met `LOG_LEVEL=debug` komen ook de debug-regels in `docker logs`.
+
+Een volledige run kan ook als testrun: **enkel blokken van–tot** en/of **stoppen na** een
+bepaalde stap (bij een nieuwe transcriptie of "opnieuw verwerken").
 
 ## Leerlus: van correctie naar skill
 

@@ -5,6 +5,31 @@ let members = [];
 let blocksTable;
 let stepsTable;
 let editing = null;
+let logTable;
+let logRows = [];
+let logLastId = 0;
+
+const LEVEL_BADGE = { debug: 'secondary', info: 'primary', warn: 'warning', error: 'danger' };
+
+async function loadLog() {
+  const rows = await App.api(`/runs/${runId}/log?after=${logLastId}`);
+  if (rows.length) {
+    logRows.push(...rows);
+    logLastId = rows[rows.length - 1].id;
+    drawLog();
+  }
+}
+
+function drawLog() {
+  const onlyWarn = document.getElementById('log-onlywarn').checked;
+  const showDebug = document.getElementById('log-debug').checked;
+  const rows = logRows.filter((r) => (onlyWarn ? ['warn', 'error'].includes(r.level) : showDebug || r.level !== 'debug'));
+  logTable.clear().rows.add(rows).draw(false);
+  const errs = logRows.filter((r) => r.level === 'error').length;
+  const badge = document.getElementById('log-errors');
+  badge.textContent = errs;
+  badge.classList.toggle('d-none', !errs);
+}
 
 const points = () => run.report?.punten || [];
 const pointLabel = (i) => {
@@ -16,12 +41,14 @@ async function load() {
   run = await App.api(`/runs/${runId}`);
   render();
   if (run.active || run.status === 'bezig' || run.status === 'wachtrij') setTimeout(poll, 2500);
+  loadLog().catch(() => {});
 }
 
 async function poll() {
   const s = await App.api(`/runs/${runId}/status`);
   if (s.active || s.status === 'bezig' || s.status === 'wachtrij') {
     renderStatus(s);
+    loadLog().catch(() => {});
     setTimeout(poll, 2500);
   } else load();
 }
@@ -209,10 +236,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!d) return;
     const s = await App.api(`/runs/${runId}/steps/${d.id}`);
     document.getElementById('s-title').textContent = `${s.step} · deel ${s.chunk === 999 ? 'slot' : s.chunk + 1} · ${s.model}`;
+    document.getElementById('s-sys').textContent = s.system || '(niet bewaard voor deze stap: run van vóór de debug-logging)';
+    document.getElementById('s-syslen').textContent = s.system ? `${s.system.length} tekens` : '';
     document.getElementById('s-in').textContent = s.input;
     document.getElementById('s-out').textContent = s.output;
     App.modal('m-step').show();
   });
+
+  logTable = App.table('#log', {
+    order: [], pageLength: 100, deferRender: true,
+    columns: [
+      { data: 'ts', render: (t) => `<span class="ts">${App.esc((t || '').slice(11, 23))}</span>` },
+      { data: 'level', render: (l) => `<span class="badge text-bg-${LEVEL_BADGE[l] || 'secondary'}">${l}</span>` },
+      { data: 'step', render: (s) => App.esc(s || '') },
+      { data: 'chunk', render: (c) => (c == null ? '' : c === 999 ? 'slot' : c + 1) },
+      { data: null, className: 'cell-text', render: (r) => `${App.esc(r.message)}${r.data ? ' <i class="bi bi-three-dots text-body-secondary" title="details"></i>' : ''}` },
+    ],
+    createdRow: (row, d) => { if (d.level === 'error') row.classList.add('table-danger'); else if (d.level === 'warn') row.classList.add('table-warning'); },
+  });
+  $('#log').on('click', 'tbody tr', function () {
+    const d = logTable.row(this).data();
+    if (!d) return;
+    document.getElementById('l-title').textContent = `${d.ts} · ${d.level} · ${d.step || ''} ${d.chunk != null ? `deel ${d.chunk === 999 ? 'slot' : d.chunk + 1}` : ''}`;
+    let pretty = d.message;
+    if (d.data) { try { pretty += `\n\n${JSON.stringify(JSON.parse(d.data), null, 2)}`; } catch { pretty += `\n\n${d.data}`; } }
+    document.getElementById('l-data').textContent = pretty;
+    App.modal('m-log').show();
+  });
+  document.getElementById('log-onlywarn').onchange = drawLog;
+  document.getElementById('log-debug').onchange = drawLog;
+  document.getElementById('log-download').href = `/api/runs/${runId}/log.txt`;
 
   $('#report').on('click', '.contribution', function () { openBlock(this.dataset.block); });
   $('#report').on('click', '.edit-point', function (e) {

@@ -11,6 +11,7 @@ import { buildReport, toDocx, toPdf, toVtt } from './services/export.js';
 import { listModels, apiKey, defaultModel } from './services/openrouter.js';
 import { addTermProposal, replacementsFromEdit, recordCorrection } from './services/learn.js';
 import { saveSkillVersion, proposeSkillChange, skillDiff } from './services/skills.js';
+import { meetingBlocks, agendaText, runTest, getTest, TEST_STEPS } from './services/testbench.js';
 import { renderLeden, renderBevoegdheden, renderTerminologie, invalidateStreets, TERM_CATEGORIES, REF_KEYS } from './services/context.js';
 
 export const api = express.Router();
@@ -64,6 +65,7 @@ api.get('/meta', (req, res) => {
     termCategories: TERM_CATEGORIES,
     refKeys: REF_KEYS,
     steps: STEPS,
+    testSteps: TEST_STEPS,
     fracties: db.prepare('SELECT DISTINCT fractie FROM members WHERE fractie IS NOT NULL ORDER BY fractie').all().map((r) => r.fractie),
     commissies: db.prepare('SELECT code, naam, voorzitter FROM commissies ORDER BY code').all(),
     pendingTerms: db.prepare("SELECT COUNT(*) n FROM terms WHERE status = 'voorstel'").get().n,
@@ -250,7 +252,7 @@ function startRun(runId, meeting, options) {
     // Agenda eerst uitlezen als dat nog niet gebeurd is
     if (meeting.agenda_text && !['klaar', 'bezig'].includes(meeting.agenda_status)) {
       db.prepare("UPDATE runs SET status = 'bezig', progress = 'Agenda uitlezen' WHERE id = ?").run(runId);
-      try { await processAgenda(meeting.id, options.models?.agenda); } catch (e) {
+      try { await processAgenda(meeting.id, options.models?.agenda, runId); } catch (e) {
         db.prepare('UPDATE runs SET warnings = ? WHERE id = ?').run(JSON.stringify([`Agenda kon niet uitgelezen worden: ${e.message}`]), runId);
       }
     }
@@ -385,6 +387,47 @@ api.get('/compare', (req, res) => {
   }
   const meta = (r) => ({ id: r.id, label: r.label, options: json(r.options, {}), cost: r.cost, tokens_in: r.tokens_in, tokens_out: r.tokens_out, skill_versions: json(r.skill_versions, {}) });
   res.json({ a: meta(ra), b: meta(rb), same, rows });
+});
+
+// ---------------- Debug-log ----------------
+api.get('/runs/:id/log', (req, res) => {
+  const after = Number(req.query.after) || 0;
+  const level = req.query.level;
+  const rows = db.prepare(`SELECT id, ts, level, step, chunk, message, data FROM run_log WHERE run_id = ? AND id > ?
+    ${level ? "AND level IN ('warn','error')" : ''} ORDER BY id LIMIT 5000`).all(req.params.id, after);
+  res.json(rows);
+});
+api.get('/runs/:id/log.txt', (req, res) => {
+  const rows = db.prepare('SELECT ts, level, step, chunk, message, data FROM run_log WHERE run_id = ? ORDER BY id').all(req.params.id);
+  const txt = rows.map((r) => `${r.ts} ${r.level.toUpperCase().padEnd(5)} ${r.step ? `[${r.step}${r.chunk != null ? ` deel ${r.chunk === 999 ? 'slot' : r.chunk + 1}` : ''}] ` : ''}${r.message}${r.data ? `\n    ${r.data}` : ''}`).join('\n');
+  res.type('text/plain').attachment(`run-${req.params.id}-log.txt`).send(txt);
+});
+
+// ---------------- Testbank ----------------
+api.get('/meetings/:id/blocks', async (req, res) => {
+  try { res.json(await meetingBlocks(Number(req.params.id), req.query.chunkWords)); } catch (e) { res.status(400).json({ error: e.message }); }
+});
+api.get('/meetings/:id/agenda-text', (req, res) => res.json({ text: agendaText(Number(req.params.id)) }));
+api.post('/test/run', async (req, res) => {
+  try {
+    const { step, input, models, skillContent, refs, meetingId, label } = req.body;
+    res.json(await runTest({ step, input, models, skillContent, refs, meetingId: meetingId ? Number(meetingId) : null, label }));
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+api.get('/test/runs', (req, res) => {
+  res.json(db.prepare(`SELECT t.id, t.meeting_id, t.step, t.model, t.skill_version, t.skill_draft, t.label, t.tokens_in, t.tokens_out, t.cost, t.ms, t.error, t.created_at,
+      length(t.input) AS input_chars, m.input_name FROM test_runs t LEFT JOIN meetings m ON m.id = t.meeting_id ORDER BY t.id DESC LIMIT 500`).all());
+});
+api.get('/test/runs/:id', (req, res) => {
+  const t = getTest(Number(req.params.id));
+  if (!t) return notFound(res);
+  t.log = db.prepare('SELECT ts, level, message, data FROM run_log WHERE test_id = ? ORDER BY id').all(t.id);
+  res.json(t);
+});
+api.delete('/test/runs/:id', (req, res) => {
+  db.prepare('DELETE FROM test_runs WHERE id = ?').run(req.params.id);
+  db.prepare('DELETE FROM run_log WHERE test_id = ?').run(req.params.id);
+  res.json({ ok: true });
 });
 
 // ---------------- Correcties ----------------

@@ -3,6 +3,7 @@
 
 const NAV = [
   ['index.html', 'bi-file-earmark-text', 'Transcripties'],
+  ['testen.html', 'bi-eyedropper', 'Testbank'],
   ['skills.html', 'bi-magic', 'Skills'],
   ['leden.html', 'bi-people', 'Raadsleden'],
   ['termen.html', 'bi-journal-text', 'Gentse context'],

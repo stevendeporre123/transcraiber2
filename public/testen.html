@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Testbank · Transcraiber</title>
+  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/vendor/datatables-bs5/css/dataTables.bootstrap5.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid">
+  <div class="d-flex align-items-center mb-2">
+    <h1 class="h4 mb-0 me-auto">Testbank <small class="text-body-secondary fs-6">één skill op een klein stuk input</small></h1>
+  </div>
+
+  <div class="row g-3">
+    <!-- 1. Invoer -->
+    <div class="col-xl-6">
+      <div class="card h-100">
+        <div class="card-header fw-semibold">1. Invoer</div>
+        <div class="card-body">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-6"><label class="form-label small mb-0">Vergadering</label>
+              <select class="form-select form-select-sm" id="t-meeting"><option value="">— eigen tekst —</option></select></div>
+            <div class="col-md-6"><label class="form-label small mb-0">Deel (zoals de pipeline opdeelt)</label>
+              <select class="form-select form-select-sm" id="t-chunk" disabled></select></div>
+            <div class="col-4 col-md-3"><label class="form-label small mb-0">Van blok</label><input type="number" min="1" class="form-control form-control-sm" id="t-from"></div>
+            <div class="col-4 col-md-3"><label class="form-label small mb-0">Tot blok</label><input type="number" min="1" class="form-control form-control-sm" id="t-to"></div>
+            <div class="col-4 col-md-6 d-flex gap-1">
+              <button class="btn btn-sm btn-outline-primary" id="t-load" disabled><i class="bi bi-box-arrow-in-down"></i> Laad blokken</button>
+              <button class="btn btn-sm btn-outline-secondary" id="t-load-agenda" disabled title="Agendatekst laden (voor agenda-extractor)"><i class="bi bi-calendar3"></i> Agenda</button>
+            </div>
+          </div>
+          <div class="small text-body-secondary my-1" id="t-meeting-info"></div>
+          <textarea class="form-control code mt-2" id="t-input" rows="16" spellcheck="false"
+            placeholder="## B001 | spreker: ?&#10;tekst van het blok&#10;&#10;## B002 | spreker: Spreker 2&#10;…"></textarea>
+          <div class="small text-body-secondary mt-1" id="t-input-stats"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Skill en modellen -->
+    <div class="col-xl-6">
+      <div class="card h-100">
+        <div class="card-header fw-semibold">2. Skill en modellen</div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-md-5"><label class="form-label small mb-0">Skill</label>
+              <select class="form-select form-select-sm" id="t-step">
+                <option value="normalizer">gentse-normalizer</option>
+                <option value="cleaner">transcript-cleaner</option>
+                <option value="resolver">speaker-resolver</option>
+                <option value="writer">verslag-writer</option>
+                <option value="agenda">agenda-extractor</option>
+                <option value="intake">transcript-intake (LLM)</option>
+              </select></div>
+            <div class="col-md-7"><label class="form-label small mb-0">Label (optioneel)</label><input class="form-control form-control-sm" id="t-label" placeholder="bv. normalizer met extra regel voor voornamen"></div>
+            <div class="col-md-4"><label class="form-label small mb-0">Model A</label><input class="form-control form-control-sm t-model" list="models-list"></div>
+            <div class="col-md-4"><label class="form-label small mb-0">Model B (optioneel)</label><input class="form-control form-control-sm t-model" list="models-list"></div>
+            <div class="col-md-4"><label class="form-label small mb-0">Model C (optioneel)</label><input class="form-control form-control-sm t-model" list="models-list"></div>
+          </div>
+          <details class="mt-3" id="t-skill-box">
+            <summary class="fw-semibold">Skilltekst <span class="badge text-bg-secondary" id="t-skill-version"></span>
+              <span class="badge text-bg-warning d-none" id="t-draft-badge">concept, niet opgeslagen</span></summary>
+            <div class="mt-2 mb-1"><span class="small fw-semibold me-2">Referenties:</span><span id="t-refs"></span></div>
+            <textarea class="form-control code" id="t-skill" rows="14" spellcheck="false"></textarea>
+            <div class="d-flex gap-2 mt-2">
+              <button class="btn btn-sm btn-outline-secondary" id="t-skill-reset"><i class="bi bi-arrow-counterclockwise"></i> Terug naar opgeslagen versie</button>
+              <input class="form-control form-control-sm" id="t-skill-note" placeholder="opmerking bij nieuwe versie">
+              <button class="btn btn-sm btn-outline-success text-nowrap" id="t-skill-save"><i class="bi bi-save"></i> Opslaan als nieuwe versie</button>
+            </div>
+            <div class="form-text">Je test altijd met de tekst hierboven: aanpassingen zijn meteen testbaar zonder op te slaan.</div>
+          </details>
+          <div class="d-flex align-items-center gap-2 mt-3">
+            <button class="btn btn-primary" id="t-run"><i class="bi bi-play-fill"></i> Test uitvoeren</button>
+            <span class="small text-body-secondary" id="t-run-info"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Resultaten -->
+  <div class="row g-3 mt-1" id="t-results"></div>
+
+  <h2 class="h5 mt-4">Eerdere tests</h2>
+  <table id="t-history" class="table table-sm table-hover w-100">
+    <thead><tr><th>#</th><th>Wanneer</th><th>Skill</th><th>Model</th><th>Versie</th><th>Label</th><th>Invoer</th><th>Tokens</th><th>Kost</th><th>Tijd</th><th></th></tr></thead>
+  </table>
+</div>
+
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/vendor/datatables/dataTables.min.js"></script>
+<script src="/vendor/datatables-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/testen.js"></script>
+</body>
+</html>

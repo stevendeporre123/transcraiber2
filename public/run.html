@@ -42,6 +42,7 @@
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-blocks">Blokken</button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-agenda">Agenda</button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-steps">Stappen &amp; kosten</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-log" id="tab-log">Debug-log <span class="badge text-bg-danger d-none" id="log-errors"></span></button></li>
   </ul>
   <div class="tab-content border border-top-0 rounded-bottom p-3">
     <div class="tab-pane fade show active" id="t-report">
@@ -61,6 +62,16 @@
         <thead><tr><th>Stap</th><th>Deel</th><th>Model</th><th>Status</th><th>Tokens in/uit</th><th>Kost</th><th>Tijd</th><th>Opmerkingen</th></tr></thead>
       </table>
       <div class="small text-body-secondary" id="skillversions"></div>
+    </div>
+    <div class="tab-pane fade" id="t-log">
+      <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+        <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="log-onlywarn"><label class="form-check-label small" for="log-onlywarn">Enkel waarschuwingen en fouten</label></div>
+        <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="log-debug"><label class="form-check-label small" for="log-debug">Debug-regels tonen</label></div>
+        <a class="btn btn-sm btn-outline-secondary ms-auto" id="log-download"><i class="bi bi-download"></i> log.txt</a>
+      </div>
+      <table id="log" class="table table-sm table-hover w-100">
+        <thead><tr><th>Tijd</th><th>Niveau</th><th>Stap</th><th>Deel</th><th>Bericht</th></tr></thead>
+      </table>
     </div>
   </div>
 </div>
@@ -142,15 +153,28 @@
   </div>
 </div>
 
+<!-- Logdetail -->
+<div class="modal fade" id="m-log" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="l-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body"><pre class="io" id="l-data" style="max-height:70vh"></pre></div>
+    </div>
+  </div>
+</div>
+
 <!-- Stapdetail -->
 <div class="modal fade" id="m-step" tabindex="-1">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header"><h5 class="modal-title" id="s-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body"><div class="row">
-        <div class="col-lg-6"><h6>Invoer (gebruikersbericht)</h6><pre class="io" id="s-in"></pre></div>
-        <div class="col-lg-6"><h6>Uitvoer model</h6><pre class="io" id="s-out"></pre></div>
-      </div></div>
+      <div class="modal-body">
+        <details class="mb-2"><summary class="fw-semibold">Systeemprompt (skill + referenties) <span class="small text-body-secondary" id="s-syslen"></span></summary><pre class="io mt-2" id="s-sys"></pre></details>
+        <div class="row">
+          <div class="col-lg-6"><h6>Invoer (gebruikersbericht)</h6><pre class="io" id="s-in"></pre></div>
+          <div class="col-lg-6"><h6>Uitvoer model</h6><pre class="io" id="s-out"></pre></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

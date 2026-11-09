@@ -2,7 +2,7 @@
 // Elke modelaanroep wordt per (run, stap, deel) bewaard, zodat een mislukte run hervat kan worden.
 import { db, json, getSetting, getNumberSetting } from '../db.js';
 import { STEPS } from '../config.js';
-import { complete, defaultModel, parseJsonLoose } from './openrouter.js';
+import { complete, defaultModel, parseJsonLoose, StopError } from './openrouter.js';
 import { buildPrompt, buildSystemPrompt } from './context.js';
 import { log } from './logger.js';
 import { analyzeOutput, logSummary } from './analyze.js';
@@ -11,8 +11,26 @@ import { readInput } from './extract.js';
 import { blocksFromCues, blocksFromText, chunkBlocks, stripPageNoise } from './intake.js';
 import { addTermProposal } from './learn.js';
 
-const active = new Set();
+// Lopende runs: runId → AbortController (voor de stopknop)
+const active = new Map();
 export const isActive = (runId) => active.has(Number(runId));
+
+/**
+ * Stopt een run. Een lopende modelaanroep wordt meteen afgebroken; afgewerkte delen blijven
+ * bewaard, zodat de run later hervat kan worden. Geeft true als er iets gestopt is.
+ */
+export function stopRun(runId) {
+  runId = Number(runId);
+  const ctrl = active.get(runId);
+  if (ctrl) {
+    ctrl.abort();
+    return true;
+  }
+  const r = db.prepare('UPDATE runs SET status = ?, error = ? WHERE id = ? AND status IN (?, ?)').run('gestopt', 'Gestopt door gebruiker', runId, 'bezig', 'wachtrij');
+  return r.changes > 0;
+}
+
+const checkStop = (ctx) => { if (ctx.signal?.aborted) throw new StopError(); };
 
 const getSkill = (naam) => {
   const s = db.prepare('SELECT * FROM skills WHERE naam = ?').get(naam);
@@ -40,6 +58,7 @@ function addWarning(runId, w) {
 async function callStep(ctx, step, chunk, { user, refText, isJson = false, validate, logInput }) {
   const { run, meeting, models } = ctx;
   const L = (level, message, data) => log({ runId: run.id, level, step, chunk, message, data });
+  checkStop(ctx);
   const cached = db.prepare("SELECT * FROM run_steps WHERE run_id = ? AND step = ? AND chunk = ? AND status IN ('ok','fallback')").get(run.id, step, chunk);
   if (cached) {
     L('debug', `bewaarde uitvoer hergebruikt (${cached.status})`);
@@ -61,8 +80,9 @@ async function callStep(ctx, step, chunk, { user, refText, isJson = false, valid
   for (let attempt = 0; attempt < 2; attempt++) {
     let res;
     try {
-      res = await complete({ model, system, user: prompt, json: isJson });
+      res = await complete({ model, system, user: prompt, json: isJson, signal: ctx.signal });
     } catch (e) {
+      if (e instanceof StopError || ctx.signal?.aborted) throw new StopError();
       L('error', `geen antwoord van ${model}: ${e.message}`, { poging: attempt + 1 });
       // Geen antwoord van het model (timeout, netwerk, quota, onbekend model): niet stil de
       // ruwe tekst doorgeven, maar de run laten mislukken zodat hij hervat kan worden.
@@ -100,11 +120,11 @@ async function callStep(ctx, step, chunk, { user, refText, isJson = false, valid
   return null;
 }
 
-async function pool(items, limit, fn) {
+async function pool(items, limit, fn, signal) {
   const out = new Array(items.length);
   let i = 0;
   const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (i < items.length) { const k = i++; out[k] = await fn(items[k], k); }
+    while (i < items.length && !signal?.aborted) { const k = i++; out[k] = await fn(items[k], k); }
   });
   await Promise.all(workers);
   return out;
@@ -272,7 +292,7 @@ async function normalizeAndClean(ctx) {
     if (clean) applyClean(run.id, chunk, clean);
     done++;
     setProgress(run.id, `Normaliseren en opschonen: ${done}/${total} delen`);
-  });
+  }, ctx.signal);
 }
 
 function applyClean(runId, chunk, clean) {
@@ -441,7 +461,8 @@ export const STOP_STEPS = ['normalizer', 'cleaner', 'resolver', 'writer'];
 export async function runPipeline(runId) {
   runId = Number(runId);
   if (active.has(runId)) return;
-  active.add(runId);
+  const controller = new AbortController();
+  active.set(runId, controller);
   const t0 = Date.now();
   const run = db.prepare('SELECT * FROM runs WHERE id = ?').get(runId);
   const meeting = db.prepare('SELECT * FROM meetings WHERE id = ?').get(run.meeting_id);
@@ -462,7 +483,7 @@ export async function runPipeline(runId) {
   const versions = Object.fromEntries(db.prepare('SELECT naam, version FROM skills').all().map((s) => [s.naam, s.version]));
   db.prepare("UPDATE runs SET status = 'bezig', error = NULL, started_at = COALESCE(started_at, datetime('now')), options = ?, skill_versions = COALESCE(skill_versions, ?) WHERE id = ?")
     .run(JSON.stringify({ ...opt, ...options, models }), JSON.stringify(versions), runId);
-  const ctx = { run, meeting, options, models };
+  const ctx = { run, meeting, options, models, signal: controller.signal };
   log({ runId, level: 'info', message: `start run ${runId}: ${meeting.input_name} (${meeting.input_type})${stopAfter !== 'writer' ? `, stopt na ${stopAfter}` : ''}`, data: {
     vergadering: { orgaan: meeting.orgaan, commissie: meeting.commissie, datum: meeting.datum, voorzitter: meeting.voorzitter, agenda: meeting.agenda_name ? `${meeting.agenda_name} (${meeting.agenda_status})` : null },
     opties: options, modellen: models, skillversies: versions,
@@ -474,16 +495,38 @@ export async function runPipeline(runId) {
     log({ runId, level: 'info', step: name, message: `fase ${name} klaar in ${((Date.now() - ts) / 1000).toFixed(1)} s` });
   };
   try {
+    // Agenda eerst uitlezen als dat nog niet gebeurd is
+    if (meeting.agenda_text && !['klaar', 'bezig'].includes(meeting.agenda_status)) {
+      await phase('agenda', async () => {
+        setProgress(runId, 'Agenda uitlezen');
+        try {
+          await processAgenda(meeting.id, opt.models?.agenda, runId, ctx.signal);
+        } catch (e) {
+          if (e instanceof StopError || ctx.signal.aborted) throw new StopError();
+          addWarning(runId, `Agenda kon niet uitgelezen worden: ${e.message}`);
+        }
+        ctx.meeting = db.prepare('SELECT * FROM meetings WHERE id = ?').get(meeting.id);
+      });
+    }
     await phase('intake', () => intake(ctx));
+    checkStop(ctx);
     await phase(options.skipCleaner ? 'normalizer' : 'normalizer+cleaner', () => normalizeAndClean(ctx));
+    checkStop(ctx);
     if (['resolver', 'writer'].includes(stopAfter)) await phase('resolver', () => resolve(ctx));
     else log({ runId, level: 'info', message: 'speaker-resolver overgeslagen (testrun)' });
+    checkStop(ctx);
     await phase('writer', () => write(ctx));
     totals(runId);
     const r = db.prepare('SELECT cost, tokens_in, tokens_out FROM runs WHERE id = ?').get(runId);
     log({ runId, level: 'info', message: `run klaar in ${((Date.now() - t0) / 1000).toFixed(0)} s, $${(r.cost || 0).toFixed(4)}, ${r.tokens_in} tokens in / ${r.tokens_out} uit` });
     db.prepare("UPDATE runs SET status = 'klaar', progress = 'Klaar', finished_at = datetime('now') WHERE id = ?").run(runId);
   } catch (e) {
+    if (e instanceof StopError || ctx.signal.aborted) {
+      totals(runId);
+      log({ runId, level: 'warn', message: `run gestopt door gebruiker na ${((Date.now() - t0) / 1000).toFixed(0)} s; afgewerkte delen blijven bewaard (Hervatten gaat verder)` });
+      db.prepare("UPDATE runs SET status = 'gestopt', error = 'Gestopt door gebruiker. Klik op Hervatten om verder te gaan.', finished_at = datetime('now') WHERE id = ?").run(runId);
+      return;
+    }
     log({ runId, level: 'error', message: `run mislukt: ${e.message}`, data: { stack: e.stack?.split('\n').slice(0, 6) } });
     totals(runId);
     db.prepare("UPDATE runs SET status = 'fout', error = ?, finished_at = datetime('now') WHERE id = ?").run(e.message, runId);
@@ -503,7 +546,7 @@ export function markInterrupted() {
 }
 
 // ---------------- Agenda ----------------
-export async function processAgenda(meetingId, model, runId = null) {
+export async function processAgenda(meetingId, model, runId = null, signal = null) {
   const meeting = db.prepare('SELECT * FROM meetings WHERE id = ?').get(meetingId);
   db.prepare("UPDATE meetings SET agenda_status = 'bezig' WHERE id = ?").run(meetingId);
   try {
@@ -515,7 +558,7 @@ export async function processAgenda(meetingId, model, runId = null) {
     const merged = { vergadering: {}, punten: [], context: [] };
     log({ runId, level: 'info', step: 'agenda', message: `agenda uitlezen: ${text.length} tekens in ${parts.length} deel/delen` });
     for (const [pi, part] of parts.entries()) {
-      const res = await complete({ model: model || defaultModel('agenda'), system, user: part, json: true });
+      const res = await complete({ model: model || defaultModel('agenda'), system, user: part, json: true, signal });
       log({ runId, level: 'info', step: 'agenda', chunk: pi, message: `antwoord ${res.model} in ${(res.ms / 1000).toFixed(1)} s, ${res.tokensIn}/${res.tokensOut} tokens, $${(res.cost || 0).toFixed(4)}` });
       const j = parseJsonLoose(res.text);
       for (const [k, v] of Object.entries(j.vergadering || {})) if (v && !merged.vergadering[k]) merged.vergadering[k] = v;

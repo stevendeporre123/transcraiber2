@@ -84,7 +84,7 @@ const App = {
   },
 
   badgeStatus(status) {
-    const map = { klaar: 'success', bezig: 'primary', wachtrij: 'secondary', fout: 'danger', voorstel: 'warning', actief: 'success', inactief: 'secondary' };
+    const map = { klaar: 'success', bezig: 'primary', wachtrij: 'secondary', fout: 'danger', gestopt: 'warning', voorstel: 'warning', actief: 'success', inactief: 'secondary' };
     return `<span class="badge text-bg-${map[status] || 'secondary'}">${App.esc(status)}</span>`;
   },
 

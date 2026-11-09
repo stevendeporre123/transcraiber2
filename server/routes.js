@@ -6,7 +6,7 @@ import { diffWordsWithSpace } from 'diff';
 import { db, json, getSetting, setSetting } from './db.js';
 import { UPLOAD_DIR, STEPS, config } from './config.js';
 import { detectType, hasTimecodes, readAgendaText } from './services/extract.js';
-import { runPipeline, processAgenda, isActive } from './services/pipeline.js';
+import { runPipeline, processAgenda, isActive, stopRun } from './services/pipeline.js';
 import { buildReport, toDocx, toPdf, toVtt } from './services/export.js';
 import { listModels, apiKey, defaultModel } from './services/openrouter.js';
 import { addTermProposal, replacementsFromEdit, recordCorrection } from './services/learn.js';
@@ -243,22 +243,21 @@ api.post('/runs', async (req, res) => {
   if (!m) return notFound(res);
   if (!config.mockLlm && !apiKey()) return res.status(400).json({ error: 'Stel eerst een OpenRouter API-key in (Instellingen).' });
   const r = db.prepare('INSERT INTO runs (meeting_id, label, options) VALUES (?, ?, ?)').run(m.id, label || null, JSON.stringify(options));
-  startRun(r.lastInsertRowid, m, options);
+  startRun(r.lastInsertRowid);
   res.json({ id: r.lastInsertRowid });
 });
 
-function startRun(runId, meeting, options) {
-  (async () => {
-    // Agenda eerst uitlezen als dat nog niet gebeurd is
-    if (meeting.agenda_text && !['klaar', 'bezig'].includes(meeting.agenda_status)) {
-      db.prepare("UPDATE runs SET status = 'bezig', progress = 'Agenda uitlezen' WHERE id = ?").run(runId);
-      try { await processAgenda(meeting.id, options.models?.agenda, runId); } catch (e) {
-        db.prepare('UPDATE runs SET warnings = ? WHERE id = ?').run(JSON.stringify([`Agenda kon niet uitgelezen worden: ${e.message}`]), runId);
-      }
-    }
-    await runPipeline(runId);
-  })();
+// De agenda wordt nu binnen runPipeline uitgelezen (zodat ook die stap te stoppen is).
+function startRun(runId) {
+  runPipeline(runId);
 }
+
+api.post('/runs/:id/stop', (req, res) => {
+  const run = db.prepare('SELECT id, status FROM runs WHERE id = ?').get(req.params.id);
+  if (!run) return notFound(res);
+  const stopped = stopRun(run.id);
+  res.json({ ok: true, stopped, status: stopped ? 'gestopt' : run.status });
+});
 
 api.post('/runs/:id/resume', (req, res) => {
   const run = db.prepare('SELECT * FROM runs WHERE id = ?').get(req.params.id);
@@ -273,7 +272,7 @@ api.post('/runs/:id/resume', (req, res) => {
       if (from <= 2) db.prepare('DELETE FROM run_blocks WHERE run_id = ?').run(run.id);
     }
   }
-  startRun(run.id, db.prepare('SELECT * FROM meetings WHERE id = ?').get(run.meeting_id), json(run.options, {}));
+  startRun(run.id);
   res.json({ ok: true });
 });
 

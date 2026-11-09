@@ -117,3 +117,38 @@ test('testbank: skill testen met concepttekst, analyse per blok', async () => {
   assert.equal(row.skill_draft, 1);
   assert.ok(db.prepare('SELECT COUNT(*) n FROM run_log WHERE test_id = ?').get(res.id).n >= 2);
 });
+
+test('stopknop: lopende run stoppen en daarna hervatten', async () => {
+  const { stopRun, isActive } = await import('../server/services/pipeline.js');
+  const m = db.prepare('SELECT * FROM meetings ORDER BY id').get();
+  const r = db.prepare('INSERT INTO runs (meeting_id, options) VALUES (?, ?)').run(m.id, JSON.stringify({ chunkWords: 300, concurrency: 1 }));
+  const id = r.lastInsertRowid;
+  process.env.MOCK_LLM_DELAY_MS = '150';
+  const running = runPipeline(id);
+  // wachten tot er minstens één deel klaar is
+  for (let i = 0; i < 100 && !db.prepare("SELECT 1 FROM run_steps WHERE run_id = ? AND step = 'cleaner' AND status = 'ok'").get(id); i++) {
+    await new Promise((res) => setTimeout(res, 50));
+  }
+  assert.ok(isActive(id));
+  assert.equal(stopRun(id), true);
+  const t0 = Date.now();
+  await running;
+  assert.ok(Date.now() - t0 < 1000, 'stopt meteen, wacht niet op het lopende deel');
+  let run = db.prepare('SELECT * FROM runs WHERE id = ?').get(id);
+  assert.equal(run.status, 'gestopt');
+  assert.ok(!isActive(id));
+  const doneBefore = db.prepare("SELECT COUNT(*) n FROM run_steps WHERE run_id = ? AND status = 'ok'").get(id).n;
+  assert.ok(doneBefore >= 2);
+  const logMsg = db.prepare("SELECT message FROM run_log WHERE run_id = ? AND message LIKE 'run gestopt%'").get(id);
+  assert.ok(logMsg, 'stop staat in het log');
+
+  // hervatten: bewaarde delen worden hergebruikt, run wordt afgewerkt
+  process.env.MOCK_LLM_DELAY_MS = '0';
+  await runPipeline(id);
+  run = db.prepare('SELECT * FROM runs WHERE id = ?').get(id);
+  assert.equal(run.status, 'klaar', run.error);
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM run_blocks WHERE run_id = ? AND merged_into IS NULL').get(id).n, 120);
+
+  // stoppen van een run die niet loopt: niets te doen
+  assert.equal(stopRun(id), false);
+});

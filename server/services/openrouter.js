@@ -16,9 +16,18 @@ export function defaultModel(step) {
  * Eén chat-completion. Geeft { text, tokensIn, tokensOut, cost, model, ms }.
  * Herprobeert bij 429/5xx met exponentiële backoff.
  */
-export async function complete({ model, system, user, temperature, json = false, maxTokens }) {
+export async function complete({ model, system, user, temperature, json = false, maxTokens, signal }) {
   const t0 = Date.now();
   if (config.mockLlm) {
+    // Optionele vertraging (tests van de stopknop); een stop breekt ze af
+    const delay = Number(process.env.MOCK_LLM_DELAY_MS) || 0;
+    if (delay) {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(resolve, delay);
+        signal?.addEventListener('abort', () => { clearTimeout(timer); reject(new StopError()); }, { once: true });
+      });
+    }
+    if (signal?.aborted) throw new StopError();
     const text = mockCompletion({ system, user, json });
     return { text, tokensIn: Math.round((system.length + user.length) / 4), tokensOut: Math.round(text.length / 4), cost: 0, model: 'mock', ms: Date.now() - t0 };
   }
@@ -34,9 +43,11 @@ export async function complete({ model, system, user, temperature, json = false,
   if (maxTokens) body.max_tokens = maxTokens;
   if (json) body.response_format = { type: 'json_object' };
 
+  const stopped = () => signal?.aborted;
   let lastErr;
   for (let attempt = 0; attempt < 4; attempt++) {
     if (attempt) await new Promise((r) => setTimeout(r, 2000 * 2 ** (attempt - 1)));
+    if (stopped()) throw new StopError();
     let res;
     try {
       res = await fetch(`${BASE}/chat/completions`, {
@@ -48,9 +59,15 @@ export async function complete({ model, system, user, temperature, json = false,
           'X-Title': 'Transcraiber',
         },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(getNumberSetting('timeout_s', 600, 30, 3600) * 1000),
+        signal: signal
+          ? AbortSignal.any([signal, AbortSignal.timeout(getNumberSetting('timeout_s', 600, 30, 3600) * 1000)])
+          : AbortSignal.timeout(getNumberSetting('timeout_s', 600, 30, 3600) * 1000),
       });
-    } catch (e) { lastErr = e; continue; }
+    } catch (e) {
+      if (stopped()) throw new StopError();
+      lastErr = e;
+      continue;
+    }
     const data = await res.json().catch(() => ({}));
     if (res.status === 429 || res.status >= 500) { lastErr = new Error(`OpenRouter ${res.status}: ${data.error?.message || ''}`); continue; }
     // Sommige modellen ondersteunen response_format niet: één keer zonder proberen
@@ -72,6 +89,14 @@ export async function complete({ model, system, user, temperature, json = false,
     };
   }
   throw lastErr || new Error('OpenRouter: onbekende fout');
+}
+
+/** Fout die aangeeft dat de gebruiker de run gestopt heeft (niet opnieuw proberen). */
+export class StopError extends Error {
+  constructor() {
+    super('Gestopt door gebruiker');
+    this.name = 'StopError';
+  }
 }
 
 let modelCache = { at: 0, list: [] };

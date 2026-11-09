@@ -95,7 +95,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       { data: null, orderable: false, className: 'text-end text-nowrap', render: (r) => `
           <a class="btn btn-sm btn-outline-primary" href="run.html?id=${r.id}" title="Openen"><i class="bi bi-eye"></i></a>
           <button class="btn btn-sm btn-outline-secondary act-rerun" data-id="${r.id}" title="Opnieuw verwerken (ander model)"><i class="bi bi-arrow-repeat"></i></button>
-          ${r.status === 'fout' ? `<button class="btn btn-sm btn-outline-warning act-resume" data-id="${r.id}" title="Hervatten"><i class="bi bi-play"></i></button>` : ''}
+          ${['bezig', 'wachtrij'].includes(r.status) ? `<button class="btn btn-sm btn-danger act-stop" data-id="${r.id}" title="Stoppen"><i class="bi bi-stop-fill"></i></button>` : ''}
+          ${['fout', 'gestopt'].includes(r.status) ? `<button class="btn btn-sm btn-outline-warning act-resume" data-id="${r.id}" title="Hervatten"><i class="bi bi-play"></i></button>` : ''}
           <button class="btn btn-sm btn-outline-danger act-del" data-id="${r.id}" title="Verwijderen"><i class="bi bi-trash"></i></button>` },
     ],
   });
@@ -110,6 +111,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const id = e.currentTarget.dataset.id;
     if (!(await App.confirm(`Run ${id} verwijderen?`))) return;
     try { await App.api(`/runs/${id}`, { method: 'DELETE' }); loadRuns(); } catch (err) { App.error(err); }
+  });
+  $('#runs').on('click', '.act-stop', async (e) => {
+    const id = e.currentTarget.dataset.id;
+    if (!(await App.confirm(`Run ${id} stoppen? Afgewerkte delen blijven bewaard; je kan later hervatten.`))) return;
+    try { await App.api(`/runs/${id}/stop`, { method: 'POST' }); App.toast('Run gestopt', 'warning'); setTimeout(loadRuns, 800); } catch (err) { App.error(err); }
   });
   $('#runs').on('click', '.act-resume', async (e) => {
     try { await App.api(`/runs/${e.currentTarget.dataset.id}/resume`, { method: 'POST', body: {} }); App.toast('Hervat'); loadRuns(); } catch (err) { App.error(err); }

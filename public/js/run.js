@@ -54,9 +54,14 @@ async function poll() {
 }
 
 function renderStatus(s) {
+  const running = !!(s.active || s.status === 'bezig' || s.status === 'wachtrij');
+  document.getElementById('btn-stop').classList.toggle('d-none', !running);
   const el = document.getElementById('r-status');
   if (s.status === 'klaar') { el.innerHTML = ''; return; }
-  el.innerHTML = s.status === 'fout'
+  el.innerHTML = s.status === 'gestopt'
+    ? `<div class="alert alert-warning py-2 mb-0 d-flex align-items-center gap-2"><i class="bi bi-stop-circle"></i> ${App.esc(s.error || 'Gestopt')}
+        <button class="btn btn-sm btn-outline-dark ms-auto" id="btn-resume-inline"><i class="bi bi-play"></i> Hervatten</button></div>`
+    : s.status === 'fout'
     ? `<div class="alert alert-danger py-2 mb-0"><i class="bi bi-exclamation-octagon"></i> ${App.esc(s.error)}</div>`
     : `<div class="alert alert-info py-2 mb-0 d-flex align-items-center gap-2"><div class="spinner-border spinner-border-sm"></div> ${App.esc(s.progress || 'Bezig…')} <span class="ms-auto small">${App.fmtCost(s.cost)}</span></div>`;
 }
@@ -306,6 +311,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!(await App.confirm(`Opnieuw verwerken vanaf "${step}"? ${step === 'normalizer' ? 'Manuele aanpassingen in de blokken gaan verloren.' : 'Bewaarde output van deze en volgende stappen wordt opnieuw berekend.'}`))) return;
     try { await App.api(`/runs/${runId}/resume`, { method: 'POST', body: { redo: step } }); setTimeout(load, 500); } catch (err) { App.error(err); }
   }));
+  document.getElementById('btn-stop').onclick = async () => {
+    if (!(await App.confirm('Run stoppen? Afgewerkte delen blijven bewaard; je kan later hervatten.'))) return;
+    const btn = document.getElementById('btn-stop');
+    btn.disabled = true;
+    try { await App.api(`/runs/${runId}/stop`, { method: 'POST' }); App.toast('Stoppen…', 'warning'); setTimeout(load, 800); } catch (err) { App.error(err); } finally { btn.disabled = false; }
+  };
+  document.getElementById('r-status').addEventListener('click', async (e) => {
+    if (!e.target.closest('#btn-resume-inline')) return;
+    try { await App.api(`/runs/${runId}/resume`, { method: 'POST', body: {} }); setTimeout(load, 500); } catch (err) { App.error(err); }
+  });
   document.getElementById('resume').onclick = async (e) => {
     e.preventDefault();
     try { await App.api(`/runs/${runId}/resume`, { method: 'POST', body: {} }); setTimeout(load, 500); } catch (err) { App.error(err); }

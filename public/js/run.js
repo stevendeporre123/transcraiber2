@@ -194,7 +194,7 @@ async function saveBlock(e) {
       body: { text_final: d.text_final, speaker_name: d.speaker_name, fractie: d.fractie, functie: d.functie, point_idx: Number(d.point_idx), lesson: d.lesson, applyAll: !!d.applyAll, learnTerms },
     });
     App.modal('m-block').hide();
-    App.toast(`Opgeslagen${res.termIds?.length ? ` · ${res.termIds.length} term(en) toegevoegd aan de Gentse context` : ''}${res.corrections?.length ? ' · correctie bewaard voor de skill-assistent' : ''}`);
+    App.toast(`Opgeslagen${res.termIds?.length ? ` · geleerd: ${App.summarizeRefs(res.termIds)}` : ''}${res.corrections?.length ? ' · correctie bewaard voor de skill-assistent' : ''}`);
     await load();
     App.loadMeta();
   } catch (err) { App.error(err); }

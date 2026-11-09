@@ -260,7 +260,9 @@ addColumn('meetings', 'prep_status', "TEXT DEFAULT 'geen'"); // geen, bezig, kla
 addColumn('meetings', 'prep_error', 'TEXT');
 addColumn('meetings', 'prep_progress', 'TEXT');
 addColumn('meetings', 'agenda_format', 'TEXT');
-addColumn('skills', 'seed_content', 'TEXT'); // meegeleverde tekst (om updates te kunnen uitrollen)
+addColumn('skills', 'seed_content', 'TEXT');
+addColumn('members', 'varianten', 'TEXT'); // STT-vervormingen van de naam, komma-gescheiden
+addColumn('streets', 'varianten', 'TEXT'); // STT-vervormingen van de straatnaam // meegeleverde tekst (om updates te kunnen uitrollen)
 
 export function getSetting(key, fallback = null) {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);

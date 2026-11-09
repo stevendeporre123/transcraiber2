@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './config.js';
 import { db } from './db.js';
+import { migrateVariantsOnce } from './services/learn.js';
 
 const SEED = path.join(ROOT, 'seed');
 const read = (f) => fs.readFileSync(path.join(SEED, f), 'utf8');
@@ -190,4 +191,6 @@ export function seedIfEmpty() {
     seedSkills(); // voegt enkel ontbrekende skills toe
   });
   tx();
+  // naam- en straatvervormingen uit de terminologie naar de leden en straten (eenmalig)
+  migrateVariantsOnce();
 }

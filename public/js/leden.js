@@ -6,10 +6,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   App.crud({
     table: '#members', endpoint: '/members', modal: 'm-member', form: 'f-member', newBtn: 'new-member', title: 'Lid',
     defaults: { functie: 'raadslid', actief: 1 },
-    dtOptions: { order: [[6, 'desc'], [0, 'asc']], pageLength: 100 },
+    dtOptions: { order: [[7, 'desc'], [0, 'asc']], pageLength: 100 },
     columns: [
       { data: 'naam', render: (n, t, r) => `<span class="fw-semibold">${App.esc(n)}</span>${r.notitie ? `<div class="small text-body-secondary">${App.esc(r.notitie)}</div>` : ''}` },
       { data: 'match_namen', render: App.esc },
+      { data: 'varianten', render: (v) => `<span class="small">${App.esc(v || '')}</span>` },
       { data: 'geslacht', render: App.esc },
       { data: 'fractie', render: App.esc },
       { data: 'functie', render: (f) => `<span class="badge ${f === 'raadslid' ? 'text-bg-light border' : 'text-bg-primary'}">${App.esc(f)}</span>` },

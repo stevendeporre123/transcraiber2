@@ -19,7 +19,7 @@
   </div>
   <p class="small text-body-secondary">Deze lijst wordt als referentie <b>LEDEN</b> en <b>BEVOEGDHEDEN</b> meegestuurd naar de skills. Een lid dat de raad verlaat zet je op <i>inactief</i> (blijft bewaard, wordt niet meer meegestuurd).</p>
   <table id="members" class="table table-sm table-hover w-100">
-    <thead><tr><th>Naam</th><th>Match-namen</th><th>G</th><th>Fractie</th><th>Functie</th><th>Bevoegdheden</th><th>Actief</th></tr></thead>
+    <thead><tr><th>Naam</th><th>Match-namen</th><th>STT-vervormingen</th><th>G</th><th>Fractie</th><th>Functie</th><th>Bevoegdheden</th><th>Actief</th></tr></thead>
   </table>
 
   <div class="d-flex align-items-center mt-5 mb-2">
@@ -39,6 +39,8 @@
         <div class="col-md-6"><label class="form-label">Volledige naam *</label><input class="form-control" name="naam" required></div>
         <div class="col-md-6"><label class="form-label">Match-namen</label><input class="form-control" name="match_namen" placeholder="Van den Bossche / Bossche">
           <div class="form-text">Achternaamvarianten voor aanspreekvormen, gescheiden door /</div></div>
+        <div class="col-12"><label class="form-label">STT-vervormingen</label><input class="form-control" name="varianten" placeholder="Bracken, Braken, Bracket">
+          <div class="form-text">Foute schrijfwijzen uit de spraakherkenning, komma-gescheiden. Gaan mee naar de normalizer en de speaker-resolver.</div></div>
         <div class="col-md-2"><label class="form-label">Geslacht</label><select class="form-select" name="geslacht"><option value="">?</option><option>M</option><option>V</option><option>X</option></select></div>
         <div class="col-md-4"><label class="form-label">Fractie</label><input class="form-control" name="fractie" list="fracties"><datalist id="fracties"></datalist></div>
         <div class="col-md-3"><label class="form-label">Functie</label>

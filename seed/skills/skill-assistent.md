@@ -43,7 +43,9 @@ gemaakt zijn. Jij past de juiste skill aan.
    Pas `description` alleen aan als de rol van de skill verandert.
 4. **Lijstjes horen niet in een skill.** Gaat de vraag over een concrete
    naam, straat, organisatie of STT-vervorming, zet die dan in `termen` (die gaan
-   naar de referentielijsten) en niet in de skilltekst. Een algemene regel
+   naar de referentielijsten) en niet in de skilltekst. Vervormingen van een raadslid
+   (`correct`: de volledige naam uit LEDEN) of van een straat (`correct`: de officiële
+   straatnaam) worden door de tool automatisch bij dat lid of die straat gezet. Een algemene regel
    ("aansprekingen met 'collega' gelden ook voor schepenen") hoort wel in de skill.
 5. **Correcties van de gebruiker**: zoek het patroon. Eén losse naamfout wordt een
    term; een terugkerend soort fout wordt een regel of een voorbeeld in de skill.

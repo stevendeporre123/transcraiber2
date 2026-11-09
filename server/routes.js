@@ -9,7 +9,7 @@ import { detectType, hasTimecodes, readAgendaText } from './services/extract.js'
 import { runPipeline, processAgenda, isActive, stopRun } from './services/pipeline.js';
 import { buildReport, toDocx, toPdf, toVtt } from './services/export.js';
 import { listModels, apiKey, defaultModel } from './services/openrouter.js';
-import { addTermProposal, replacementsFromEdit, recordCorrection } from './services/learn.js';
+import { addTermProposal, replacementsFromEdit, recordCorrection, promoteTerm } from './services/learn.js';
 import { saveSkillVersion, proposeSkillChange, skillDiff } from './services/skills.js';
 import { meetingBlocks, agendaText, runTest, getTest, TEST_STEPS } from './services/testbench.js';
 import { prepareMeeting, stopPrepare, isPreparing, listSegments, loadBlocks as loadMeetingBlocks, setSegmentStart, addSegment, updateSegment, deleteSegment } from './services/prepare.js';
@@ -30,14 +30,15 @@ const pick = (obj, keys) => Object.fromEntries(keys.filter((k) => obj[k] !== und
 const notFound = (res) => res.status(404).json({ error: 'Niet gevonden' });
 
 // ---------------- Generieke CRUD ----------------
-function crud(route, table, fields, { order = 'id', onChange } = {}) {
+function crud(route, table, fields, { order = 'id', onChange, afterSave } = {}) {
   api.get(`/${route}`, (req, res) => res.json(db.prepare(`SELECT * FROM ${table} ORDER BY ${order}`).all()));
   api.post(`/${route}`, (req, res) => {
     const data = pick(req.body, fields);
     const keys = Object.keys(data);
     const r = db.prepare(`INSERT INTO ${table} (${keys.join(',')}) VALUES (${keys.map((k) => '@' + k).join(',')})`).run(data);
+    const moved = afterSave?.(r.lastInsertRowid);
     onChange?.();
-    res.json(db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(r.lastInsertRowid));
+    res.json(moved ? { moved } : db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(r.lastInsertRowid));
   });
   api.put(`/${route}/:id`, (req, res) => {
     const data = pick(req.body, fields);
@@ -45,8 +46,9 @@ function crud(route, table, fields, { order = 'id', onChange } = {}) {
     if (!keys.length) return res.status(400).json({ error: 'Geen velden' });
     const extra = ['members', 'terms'].includes(table) ? ", updated_at = datetime('now')" : '';
     db.prepare(`UPDATE ${table} SET ${keys.map((k) => `${k} = @${k}`).join(', ')}${extra} WHERE id = @id`).run({ ...data, id: req.params.id });
+    const moved = afterSave?.(Number(req.params.id));
     onChange?.();
-    res.json(db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(req.params.id));
+    res.json(moved ? { moved } : db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(req.params.id));
   });
   api.delete(`/${route}/:id`, (req, res) => {
     db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(req.params.id);
@@ -55,9 +57,10 @@ function crud(route, table, fields, { order = 'id', onChange } = {}) {
   });
 }
 
-crud('members', 'members', ['naam', 'match_namen', 'geslacht', 'fractie', 'functie', 'aanspreekvorm', 'portefeuille', 'trefwoorden', 'notitie', 'actief'], { order: 'actief DESC, naam' });
-crud('terms', 'terms', ['categorie', 'varianten', 'correct', 'toelichting', 'bron', 'status'], { order: "status = 'voorstel' DESC, categorie, correct" });
-crud('streets', 'streets', ['naam', 'deelgemeente'], { order: 'naam', onChange: invalidateStreets });
+crud('members', 'members', ['naam', 'match_namen', 'varianten', 'geslacht', 'fractie', 'functie', 'aanspreekvorm', 'portefeuille', 'trefwoorden', 'notitie', 'actief'], { order: 'actief DESC, naam' });
+// Een actieve term die een vervorming van een raadslid of straat is, verhuist naar dat lid of die straat
+crud('terms', 'terms', ['categorie', 'varianten', 'correct', 'toelichting', 'bron', 'status'], { order: "status = 'voorstel' DESC, categorie, correct", afterSave: promoteTerm, onChange: invalidateStreets });
+crud('streets', 'streets', ['naam', 'deelgemeente', 'varianten'], { order: 'naam', onChange: invalidateStreets });
 crud('commissies', 'commissies', ['code', 'naam', 'schepenen', 'voorzitter'], { order: 'code' });
 
 api.get('/health', (req, res) => res.json({ ok: true }));
@@ -81,8 +84,14 @@ api.post('/terms/bulk', (req, res) => {
   const stmt = action === 'delete'
     ? db.prepare('DELETE FROM terms WHERE id = ?')
     : db.prepare(`UPDATE terms SET status = ?, updated_at = datetime('now') WHERE id = ?`);
-  db.transaction(() => ids.forEach((id) => (action === 'delete' ? stmt.run(id) : stmt.run(action === 'approve' ? 'actief' : 'inactief', id))))();
-  res.json({ ok: true, count: ids.length });
+  const moved = [];
+  db.transaction(() => ids.forEach((id) => {
+    if (action === 'delete') return stmt.run(id);
+    stmt.run(action === 'approve' ? 'actief' : 'inactief', id);
+    if (action === 'approve') { const m = promoteTerm(id); if (m) moved.push(m); }
+  }))();
+  if (moved.length) invalidateStreets();
+  res.json({ ok: true, count: ids.length, moved });
 });
 
 // Referenties als md (om terug te gebruiken als skillbestand buiten de tool)
@@ -160,7 +169,8 @@ api.post('/skills/apply', (req, res) => {
   if (!s) return notFound(res);
   if (baseVersion && s.version !== Number(baseVersion)) return res.status(409).json({ error: `De skill is intussen gewijzigd (versie ${s.version}). Genereer het voorstel opnieuw.` });
   const updated = content ? saveSkillVersion(s.id, content, { note: note || 'Aanpassing via skill-assistent', author: 'assistent' }) : s;
-  const termIds = termen.map((t) => addTermProposal({ ...t, bron: 'assistent', status: 'actief' }));
+  const termIds = termen.map((t) => addTermProposal({ ...t, bron: 'assistent', status: 'actief' })).filter(Boolean);
+  invalidateStreets();
   if (correctionIds.length) {
     const upd = db.prepare("UPDATE corrections SET processed = 1, learned = COALESCE(learned || ', ', '') || ? WHERE id = ?");
     for (const id of correctionIds) upd.run(`skill:${skill} v${updated.version}`, id);
@@ -418,7 +428,8 @@ api.put('/runs/:id/blocks/:blockId', (req, res) => {
   })();
   const termIds = learnTerms.filter((t) => t.correct).map((t) => addTermProposal({ ...t, bron: 'correctie', status: 'actief', meetingId: db.prepare('SELECT meeting_id FROM runs WHERE id = ?').get(runId).meeting_id }));
   if (termIds.length) {
-    for (const c of corrections) db.prepare('UPDATE corrections SET learned = ? WHERE id = ?').run(termIds.map((id) => `term:${id}`).join(', '), c);
+    invalidateStreets();
+    for (const c of corrections) db.prepare('UPDATE corrections SET learned = ? WHERE id = ?').run(termIds.filter(Boolean).join(', '), c);
   }
   res.json({ block: db.prepare('SELECT * FROM run_blocks WHERE run_id = ? AND block_id = ?').get(runId, b.block_id), corrections, termIds });
 });

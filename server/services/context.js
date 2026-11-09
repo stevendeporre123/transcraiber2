@@ -25,8 +25,8 @@ const cell = (s) => String(s ?? '').replace(/\|/g, '/').replace(/\n+/g, ' ').tri
 export function renderLeden() {
   const rows = db.prepare(`SELECT * FROM members WHERE actief = 1 ORDER BY
     CASE functie WHEN 'burgemeester' THEN 0 WHEN 'voorzitter' THEN 1 WHEN 'ondervoorzitter' THEN 2 WHEN 'schepen' THEN 3 ELSE 4 END, naam`).all();
-  let out = '| Naam | Achternaam (match) | Geslacht | Fractie | Functie | Aanspreekvorm | Opmerking |\n|---|---|---|---|---|---|---|\n';
-  for (const m of rows) out += `| ${cell(m.naam)} | ${cell(m.match_namen)} | ${cell(m.geslacht)} | ${cell(m.fractie)} | ${cell(m.functie)} | ${cell(m.aanspreekvorm)} | ${cell(m.notitie)} |\n`;
+  let out = '| Naam | Achternaam (match) | Gekende STT-vervormingen | Geslacht | Fractie | Functie | Aanspreekvorm | Opmerking |\n|---|---|---|---|---|---|---|---|\n';
+  for (const m of rows) out += `| ${cell(m.naam)} | ${cell(m.match_namen)} | ${cell(m.varianten)} | ${cell(m.geslacht)} | ${cell(m.fractie)} | ${cell(m.functie)} | ${cell(m.aanspreekvorm)} | ${cell(m.notitie)} |\n`;
   // Dubbele voornamen automatisch signaleren
   const byFirst = new Map();
   for (const m of rows) {
@@ -97,7 +97,9 @@ let streetCache = null;
 export function invalidateStreets() { streetCache = null; }
 function streetIndex() {
   if (!streetCache) {
-    streetCache = db.prepare('SELECT naam, deelgemeente FROM streets').all().map((s) => ({ ...s, key: fold(s.naam) }));
+    // elke straat één keer per schrijfwijze: de officiële naam en de gekende STT-vervormingen
+    streetCache = db.prepare('SELECT naam, deelgemeente, varianten FROM streets').all().flatMap((s) => [s.naam, ...String(s.varianten || '').split(',')]
+      .map((v) => v.trim()).filter(Boolean).map((v) => ({ ...s, key: fold(v) })));
   }
   return streetCache;
 }
@@ -135,14 +137,22 @@ export function candidateStreets(text, limit = 120) {
     if (best <= max) hits.push({ ...s, d: best });
   }
   hits.sort((a, b) => a.d - b.d);
-  return hits.slice(0, limit);
+  // per straat (naam + deelgemeente) enkel de beste treffer
+  const seen = new Set();
+  return hits.filter((h) => { const k = `${h.naam}|${h.deelgemeente}`; return seen.has(k) ? false : seen.add(k); }).slice(0, limit);
 }
 
 export function renderStraten(text) {
   const byName = new Map();
-  for (const s of candidateStreets(text)) byName.set(s.naam, [...(byName.get(s.naam) || []), s.deelgemeente]);
+  const vars = new Map();
+  for (const s of candidateStreets(text)) {
+    const deel = byName.get(s.naam) || [];
+    if (!deel.includes(s.deelgemeente)) deel.push(s.deelgemeente);
+    byName.set(s.naam, deel);
+    if (s.varianten) vars.set(s.naam, s.varianten);
+  }
   if (!byName.size) return null;
-  return [...byName].map(([naam, deel]) => `- ${naam} (${deel.join(', ')})`).join('\n');
+  return [...byName].map(([naam, deel]) => `- ${naam} (${deel.join(', ')})${vars.has(naam) ? ` — gekende STT-vervormingen: ${vars.get(naam)}` : ''}`).join('\n');
 }
 
 // ---------- Vergadering en agenda ----------

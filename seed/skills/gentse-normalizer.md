@@ -16,11 +16,13 @@ Zet aantoonbaar verkeerd geschreven eigennamen en vaste termen recht. Je raakt
 niets anders aan: geen spraakruis, geen grammatica, geen zinsbouw.
 
 ## Benodigde referenties (worden meegegeven onder de skill)
-- **LEDEN**: ledenlijst gemeenteraad (namen, functies, fracties)
+- **LEDEN**: ledenlijst gemeenteraad (namen, functies, fracties), met per lid de
+  kolom "Gekende STT-vervormingen"
 - **GENTSE TERMINOLOGIE**: organisaties, wijken, commissies, STT-foutentabellen
 - **STRATENLIJST** (optioneel): alleen als die meegegeven is. Dit is een
-  voorselectie van officiële straatnamen die op woorden in de tekst lijken;
-  een straat die er niet in staat, laat je ongewijzigd.
+  voorselectie van officiële straatnamen die op woorden in de tekst lijken, met
+  waar bekend de gekende STT-vervormingen; een straat die er niet in staat, laat
+  je ongewijzigd.
 - **AGENDA** (optioneel): de agendapunten van deze vergadering met titels,
   indieners, bevoegde schepenen en de namen, projecten en organisaties die in
   de agenda voorkomen. De schrijfwijze in de agenda is officieel: gebruik ze
@@ -45,9 +47,9 @@ tekst. Daarna een sectie `## NOTITIES` (zie onder). Geef niets anders terug.
 Voer ze uit op elk blok. Eén blok kan meerdere correcties nodig hebben.
 
 ### 1. Namen van raadsleden en schepenen
-Vergelijk elke naam of naamachtig woord met LEDEN en de foutentabel in
-GENTSE TERMINOLOGIE.
-- Staat de vervorming letterlijk in de foutentabel: corrigeer.
+Vergelijk elke naam of naamachtig woord met LEDEN (ook de kolom "Gekende
+STT-vervormingen") en de foutentabel in GENTSE TERMINOLOGIE.
+- Staat de vervorming letterlijk bij een lid of in de foutentabel: corrigeer.
 - Klinkt de vervorming duidelijk als een naam uit LEDEN (klinkerverwarring,
   weggevallen eindklank, gesplitste achternaam: "Decmain" wordt "Deckmyn",
   "Ries Hermans" wordt "Rysermans") **en** past die persoon in de zin: corrigeer.

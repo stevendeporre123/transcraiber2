@@ -19,7 +19,7 @@
   <p class="small text-body-secondary">Per deel van de transcriptie stuurt de tool enkel de straten mee die op woorden in de tekst lijken (ook bij STT-vervormingen),
     zodat de normalizer de officiële schrijfwijze kent zonder telkens de hele lijst te moeten lezen.</p>
   <table id="streets" class="table table-sm table-hover w-100">
-    <thead><tr><th>Straatnaam</th><th>Deelgemeente</th></tr></thead>
+    <thead><tr><th>Straatnaam</th><th>Deelgemeente</th><th>STT-vervormingen</th></tr></thead>
   </table>
 </div>
 
@@ -29,7 +29,9 @@
       <div class="modal-header"><h5 class="modal-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
       <div class="modal-body">
         <label class="form-label">Straatnaam *</label><input class="form-control mb-2" name="naam" required>
-        <label class="form-label">Deelgemeente</label><input class="form-control" name="deelgemeente" list="deelgemeenten"><datalist id="deelgemeenten"></datalist>
+        <label class="form-label">Deelgemeente</label><input class="form-control mb-2" name="deelgemeente" list="deelgemeenten"><datalist id="deelgemeenten"></datalist>
+        <label class="form-label">STT-vervormingen</label><input class="form-control" name="varianten" placeholder="neckersberglaan, neckers berg laan">
+        <div class="form-text">Foute schrijfwijzen, komma-gescheiden. De voorselectie van straten herkent ook deze vormen.</div>
       </div>
       <div class="modal-footer"><button type="button" class="btn btn-outline-danger me-auto btn-delete">Verwijderen</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button><button class="btn btn-primary">Opslaan</button></div>

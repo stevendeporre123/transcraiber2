@@ -161,9 +161,9 @@ const App = {
       e.preventDefault();
       const data = App.readForm(form);
       try {
-        await App.api(current ? `${opts.endpoint}/${current.id}` : opts.endpoint, { method: current ? 'PUT' : 'POST', body: data });
+        const saved = await App.api(current ? `${opts.endpoint}/${current.id}` : opts.endpoint, { method: current ? 'PUT' : 'POST', body: data });
         App.modal(opts.modal).hide();
-        App.toast('Opgeslagen');
+        App.toast(saved?.moved ? `Opgeslagen bij ${App.describeRef(saved.moved)}` : 'Opgeslagen');
         await reload();
         opts.onSaved?.();
       } catch (err) { App.error(err); }
@@ -179,6 +179,19 @@ const App = {
     };
     reload().catch(App.error);
     return { dt, reload, open };
+  },
+
+  /** "lid:12" / "straat:5" / "term:9" → leesbare tekst */
+  describeRef(ref) {
+    const [kind] = String(ref).split(':');
+    return { lid: 'het raadslid (Raadsleden)', straat: 'de straat (Straten)', term: 'de Gentse context' }[kind] || ref;
+  },
+
+  /** Lijst verwijzingen → "2 bij raadsleden, 1 bij straten" */
+  summarizeRefs(refs = []) {
+    const n = (k) => refs.filter((r) => String(r).startsWith(`${k}:`)).length;
+    return [[n('lid'), 'bij raadsleden'], [n('straat'), 'bij straten'], [n('term'), 'in de Gentse context']]
+      .filter(([c]) => c).map(([c, l]) => `${c} ${l}`).join(', ');
   },
 
   /** Unified diff → gekleurde HTML */

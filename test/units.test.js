@@ -125,3 +125,38 @@ test('instellingen: leeg/null opgeslagen = standaardwaarde (bug: timeout 0, conc
   setSetting('temperature', '0');
   assert.equal(getNumberSetting('temperature', 0.1, 0, 2), 0, '0 is een geldige temperatuur');
 });
+
+test('vervormingen: namen naar de leden, straten naar de stratenlijst, de rest blijft terminologie', async () => {
+  const { addTermProposal, resolveTarget, promoteTerm } = await import('../server/services/learn.js');
+  const { renderLeden, renderStraten, invalidateStreets } = await import('../server/services/context.js');
+  const { db } = await import('../server/db.js');
+
+  // migratie bij het seeden: Bracken staat nu bij Sofie Bracke, niet meer in de terminologie
+  assert.match(db.prepare("SELECT varianten FROM members WHERE naam = 'Sofie Bracke'").get().varianten, /Bracken/);
+  assert.ok(!db.prepare("SELECT 1 FROM terms WHERE correct LIKE 'Bracke (%'").get());
+  assert.ok(db.prepare("SELECT 1 FROM terms WHERE correct = 'Jan Jambon'").get(), 'minister blijft een term');
+
+  assert.equal(resolveTarget('Taeldeman (Sven Taeldeman)', 'naam_fout').row.naam, 'Sven Taeldeman');
+  assert.equal(resolveTarget('schepen Peeters', 'naam_fout').row.naam, 'Christophe Peeters');
+  assert.equal(resolveTarget('vermoedelijk schepen Willaert', 'aanvulling'), null);
+  assert.equal(resolveTarget('de Nekkersberglaan', 'straat').kind, 'straat');
+
+  // correctie in de output (actief): meteen bij het lid
+  assert.match(addTermProposal({ categorie: 'naam_fout', correct: 'Sven Taeldeman', varianten: 'Taal de man', bron: 'correctie', status: 'actief' }), /^lid:/);
+  assert.match(db.prepare("SELECT varianten FROM members WHERE naam = 'Sven Taeldeman'").get().varianten, /Taal de man/);
+  // voorstel van de normalizer: eerst een voorstel, bij goedkeuring naar het lid
+  const ref = addTermProposal({ categorie: 'naam_fout', correct: 'Bob Cammaert', varianten: 'Camaer', bron: 'normalizer' });
+  assert.match(ref, /^term:/);
+  const id = Number(ref.split(':')[1]);
+  db.prepare("UPDATE terms SET status = 'actief' WHERE id = ?").run(id);
+  assert.match(promoteTerm(id), /^lid:/);
+  assert.ok(!db.prepare('SELECT 1 FROM terms WHERE id = ?').get(id));
+  assert.match(db.prepare("SELECT varianten FROM members WHERE naam = 'Bob Cammaert'").get().varianten, /Camaer/);
+  // straat
+  addTermProposal({ categorie: 'straat', correct: 'Krekelstraat', varianten: 'krikkelstraat', bron: 'correctie', status: 'actief' });
+  invalidateStreets();
+  assert.match(renderStraten('ze reden door de krikkelstraat naar huis'), /Krekelstraat .*gekende STT-vervormingen: krikkelstraat/);
+  // organisatie blijft een term
+  assert.match(addTermProposal({ categorie: 'organisatie', correct: 'Blue-bikes', varianten: 'blue backs', bron: 'correctie', status: 'actief' }), /^term:/);
+  assert.match(renderLeden(), /\| Sofie Bracke \| [^|]*\| Bracken, Braken, Bracket \|/);
+});

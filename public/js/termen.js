@@ -13,7 +13,8 @@ function updatePending(rows) {
 
 async function bulk(action) {
   try {
-    await App.api('/terms/bulk', { method: 'POST', body: { ids: [...selected], action } });
+    const r = await App.api('/terms/bulk', { method: 'POST', body: { ids: [...selected], action } });
+    if (r.moved?.length) App.toast(`${r.moved.length} vervorming(en) verhuisd: ${App.summarizeRefs(r.moved)}`, 'info');
     selected.clear();
     updatePending(await crud.reload());
     App.loadMeta();

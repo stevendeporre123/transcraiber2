@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         body: { skill: proposal.skill, baseVersion: proposal.baseVersion, content: document.getElementById('p-content').value, note: document.getElementById('p-note').value, termen, correctionIds: proposal.correctionIds },
       });
       App.modal('m-proposal').hide();
-      App.toast(`${proposal.skill} bijgewerkt naar v${r.skill.version}${r.termIds.length ? ` · ${r.termIds.length} term(en) toegevoegd` : ''}`);
+      App.toast(`${proposal.skill} bijgewerkt naar v${r.skill.version}${r.termIds.length ? ` · geleerd: ${App.summarizeRefs(r.termIds)}` : ''}`);
       document.querySelector('#f-assist [name=instruction]').value = '';
       selCorr.clear();
       useSelection = false;

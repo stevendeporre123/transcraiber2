@@ -21,7 +21,11 @@ app.use('/vendor/bootstrap-icons', express.static(nm('bootstrap-icons/font')));
 app.use('/vendor/jquery', express.static(nm('jquery/dist')));
 app.use('/vendor/datatables', express.static(nm('datatables.net/js')));
 app.use('/vendor/datatables-bs5', express.static(nm('datatables.net-bs5')));
-app.use(express.static(path.join(ROOT, 'public')));
+// Eigen HTML/JS/CSS: altijd opnieuw valideren (anders houdt de browser of Cloudflare na een update
+// oude scripts vast naast nieuwe pagina's). De vendor-bibliotheken hierboven mogen wel gecachet worden.
+app.use(express.static(path.join(ROOT, 'public'), {
+  setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache'),
+}));
 
 app.listen(config.port, () => {
   console.log(`Transcraiber draait op http://localhost:${config.port}${config.mockLlm ? ' (MOCK_LLM)' : ''}`);

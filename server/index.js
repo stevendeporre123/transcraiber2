@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
 import { ROOT, config } from './config.js';
@@ -21,6 +22,24 @@ app.use('/vendor/bootstrap-icons', express.static(nm('bootstrap-icons/font')));
 app.use('/vendor/jquery', express.static(nm('jquery/dist')));
 app.use('/vendor/datatables', express.static(nm('datatables.net/js')));
 app.use('/vendor/datatables-bs5', express.static(nm('datatables.net-bs5')));
+// HTML-pagina's: verwijzingen naar eigen scripts/stylesheets krijgen een versienummer
+// (?v=<starttijd van de server>), zodat een nieuwe pagina nooit een oud, gecachet script laadt,
+// ook niet als Cloudflare de browser 4 uur laat cachen.
+const BUILD = Date.now().toString(36);
+const pageCache = new Map();
+app.get(/^\/(?:[\w-]+\.html)?$/, (req, res, next) => {
+  const name = req.path === '/' ? 'index.html' : req.path.slice(1);
+  const file = path.join(ROOT, 'public', name);
+  let html = pageCache.get(file);
+  if (!html) {
+    if (!fs.existsSync(file)) return next();
+    html = fs.readFileSync(file, 'utf8').replace(/((?:src|href)="(?:js|css)\/[\w.-]+\.(?:js|css))"/g, `$1?v=${BUILD}"`);
+    pageCache.set(file, html);
+  }
+  res.setHeader('Cache-Control', 'no-cache');
+  res.type('html').send(html);
+});
+
 // Eigen HTML/JS/CSS: altijd opnieuw valideren (anders houdt de browser of Cloudflare na een update
 // oude scripts vast naast nieuwe pagina's). De vendor-bibliotheken hierboven mogen wel gecachet worden.
 app.use(express.static(path.join(ROOT, 'public'), {

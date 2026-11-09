@@ -27,6 +27,9 @@ export function mockCompletion({ system, user }) {
       return `${heads.join('\n')}\n\n## SPREKERTABEL\n(mock)\n\n## NOTITIES\nMock-resolver.\n`;
     }
     case 'verslag-writer': {
+      if (/MODUS:\s*PUNT\b/.test(user) && !/MODUS:\s*PUNTEN/.test(user)) {
+        return JSON.stringify({ samenvatting: `Bespreking in ${blocks.length} blok(ken) (mock).`, beslissingen: [] });
+      }
       if (/MODUS:\s*SLOT/.test(user)) {
         return JSON.stringify({ titel: 'Vergaderverslag (mock)', samenvatting: 'De raad besprak enkele punten. Dit is een testsamenvatting.', waarschuwingen: [] });
       }
@@ -36,6 +39,20 @@ export function mockCompletion({ system, user }) {
       const punten = [{ start: first, type: 'agendapunt', nummer: '1', titel: 'Eerste onderwerp', samenvatting: 'Bespreking van het eerste onderwerp.', beslissingen: [], vervolg }];
       if (half !== first) punten.push({ start: half, type: 'agendapunt', nummer: '2', titel: 'Tweede onderwerp', samenvatting: 'Bespreking van het tweede onderwerp.', beslissingen: ['Het punt is aangenomen.'] });
       return JSON.stringify({ punten });
+    }
+    case 'agenda-segmenter': {
+      // Opening op het eerste blok; daarna om de twee blokken een agendapunt, met een citaat
+      // vanaf het derde woord (zodat de tool het blok moet knippen).
+      const ids = [...user.matchAll(/^- (P\d+) \|/gm)].map((m) => m[1]);
+      const segs = [];
+      if (!/VORIG SEGMENT:\s*geen/.test(user) && blocks.length) segs.push({ start: blocks[0].id, vervolg: true });
+      else if (blocks.length) segs.push({ start: blocks[0].id, citaat: blocks[0].text.split(' ').slice(0, 4).join(' '), punten: [], label: 'Opening', zekerheid: 'hoog' });
+      let k = 0;
+      for (let i = 1; i < blocks.length && k < ids.length; i += 2, k++) {
+        const w = blocks[i].text.split(' ');
+        segs.push({ start: blocks[i].id, citaat: w.slice(2, 8).join(' '), punten: [ids[k]], zekerheid: 'middel', bewijs: 'mock' });
+      }
+      return JSON.stringify({ segmenten: segs });
     }
     case 'agenda-extractor':
       return JSON.stringify({

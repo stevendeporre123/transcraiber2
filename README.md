@@ -55,6 +55,20 @@ docker run --rm -v transcraiber-data:/data -v "$PWD":/backup alpine \
 ```
 Of neem het volume `transcraiber-data` mee in Duplicati.
 
+## Werkwijze in twee stappen
+
+1. **Vergadering voorbereiden** (gebeurt automatisch na het opladen)
+   - transcriptie → blokken in de databank, met de tijdcodes van elke VTT/SRT-cue;
+   - agenda → agendapunten, **in code** ingelezen voor de Gentse formaten (gemeenteraadsagenda
+     met dossiercodes, bundel prerogatieven van het vragenuurtje met indiener, bevoegde schepen
+     en toelichting). Alleen als er geen dossiercodes in staan, leest de LLM de punten;
+   - skill `agenda-segmenter` zoekt per agendapunt waar het begint, met een letterlijk citaat;
+     de tool knipt het blok daar en het nieuwe stuk krijgt de echte begintijd van de cue;
+   - op de vergaderpagina kies je welke punten behandeld worden (bv. **enkel mondelinge
+     vragen**), bekijk je de tekst per punt en verleg je grenzen (tekst selecteren → *Begin hier*).
+2. **Verwerken**: een run doorloopt de geselecteerde punten één voor één. De fiche van het punt
+   gaat mee als referentie `AGENDAPUNT` naar normalizer, resolver en writer.
+
 ## Werking
 
 ```

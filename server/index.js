@@ -3,10 +3,12 @@ import express from 'express';
 import { ROOT, config } from './config.js';
 import { seedIfEmpty } from './seed.js';
 import { markInterrupted } from './services/pipeline.js';
+import { markPrepInterrupted } from './services/prepare.js';
 import { api } from './routes.js';
 
 seedIfEmpty();
 markInterrupted();
+markPrepInterrupted();
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));

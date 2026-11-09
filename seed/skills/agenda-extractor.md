@@ -33,7 +33,7 @@ komen in delen; elk deel verwerk je op zichzelf.
     {
       "nummer": "13",
       "titel": "Vraag van raadslid Tom De Meester over sluikstort in Nieuw-Gent",
-      "type": "vraag",
+      "type": "mondelinge_vraag",
       "indieners": ["Tom De Meester"],
       "schepen": "Sofie Bracke",
       "kern": "Eén zin over waar het punt over gaat."
@@ -49,8 +49,8 @@ komen in delen; elk deel verwerk je op zichzelf.
 - `vergadering.orgaan`: "gemeenteraad" of "commissie". `commissie`: de afkorting
   (VOGOK, MASSE, WWOPP, FJEWD, FABAZ) of de naam van een themacommissie. `datum`
   in ISO-formaat (JJJJ-MM-DD). Laat leeg wat niet in de tekst staat.
-- `punten[].type`: één van besluit, vraag, interpellatie, motie, voorstel,
-  mededeling, overig.
+- `punten[].type`: één van besluit, mondelinge_vraag, interpellatie, motie, voorstel,
+  amendement, mededeling, overig.
 - `indieners`: namen van raadsleden die het punt indienen (vragen, interpellaties,
   moties, voorstellen). Schrijf namen zoals in LEDEN als het dezelfde persoon is.
 - `schepen`: de bevoegde schepen of burgemeester als die vermeld staat; anders
@@ -61,6 +61,11 @@ komen in delen; elk deel verwerk je op zichzelf.
   straten, evenementen, externe sprekers. `categorie` is één van project,
   organisatie, gebouw, wijk, straat, evenement, persoon. Geen gewone woorden,
   geen raadsleden, maximaal 40 items per deel.
+
+## Opmerking
+Gentse agenda's met dossiercodes (bv. `(2026_GR_00773)`, `2026_MV_00773`) worden in
+code ingelezen. Dan wordt deze skill alleen gebruikt voor `vergadering` en `context`;
+de punten uit je antwoord worden dan genegeerd.
 
 ## Regels
 - Neem titels en nummers letterlijk over (titel mag ingekort tot ±20 woorden).

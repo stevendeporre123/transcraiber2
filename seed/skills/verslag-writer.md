@@ -6,7 +6,7 @@ description: >
   beslissingen en stemmingen, en de algemene samenvatting. Geeft JSON terug; de
   tool zet daarna zelf de letterlijke bijdragen per punt in het verslag.
   Laatste stap, na speaker-resolver.
-refs: [vergadering, agenda]
+refs: [vergadering, agenda, agendapunt]
 ---
 
 # Skill: verslag-writer
@@ -20,7 +20,20 @@ opgeschoonde bijdragen zelf. Jij levert de structuur en de samenvattingen:
 - de beslissingen en stemmingen die letterlijk uitgesproken zijn,
 - in de slotmodus: de algemene samenvatting van de vergadering.
 
-Er zijn twee modi. De gebruikersboodschap begint met `MODUS: PUNTEN` of `MODUS: SLOT`.
+Er zijn drie modi. De gebruikersboodschap begint met `MODUS: PUNT`, `MODUS: PUNTEN` of `MODUS: SLOT`.
+
+## Modus PUNT (één agendapunt, al afgebakend)
+
+De tool heeft de transcriptie vooraf per agendapunt opgedeeld. Je krijgt de blokken van
+één agendapunt, met de gegevens van dat punt in de referentie AGENDAPUNT.
+
+Output (alleen JSON):
+```json
+{ "samenvatting": "1 of 2 zinnen in de derde persoon.", "beslissingen": [] }
+```
+- `samenvatting`: wat er gevraagd, geantwoord of besproken werd. Geen citaten, alleen wat in de tekst staat.
+- `beslissingen`: alleen wat letterlijk uitgesproken is (stemming, aangenomen, verworpen). Anders een lege lijst.
+
 
 ## Modus PUNTEN
 

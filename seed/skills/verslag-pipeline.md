@@ -25,6 +25,14 @@ context voor de skill-assistent.
 - Invoer: PDF, DOCX, VTT of SRT. VTT en SRT hebben tijdcodes; die worden per blok
   bijgehouden in code, het model ziet ze niet. Alleen dan kan er VTT-uitvoer zijn.
 - Intake gebeurt in code (optioneel via transcript-intake met een LLM).
+- **Voorbereiding per vergadering** (vóór de runs): de blokken gaan met hun tijdcodes de
+  databank in; de agenda wordt in code ingelezen (dossiercodes zoals `2026_MV_00773`), en
+  agenda-segmenter zoekt per agendapunt waar het begint, met een letterlijk citaat. De
+  tool knipt het blok op dat citaat; het nieuwe stuk krijgt de begintijd van de VTT-cue.
+- Een run verwerkt de **geselecteerde agendapunten** (bv. enkel mondelinge vragen). Delen
+  lopen nooit over een agendapunt heen, en de fiche van het punt (indiener, bevoegde
+  schepen, toelichting) gaat mee als referentie AGENDAPUNT. verslag-writer werkt dan in
+  `MODUS: PUNT` (samenvatting per punt).
 - Agenda (PDF, optioneel) gaat eerst door agenda-extractor. Het resultaat wordt als
   referentie AGENDA meegegeven aan gentse-normalizer, speaker-resolver en verslag-writer.
 - Referenties komen uit de databank (leden, bevoegdheden, terminologie, straten)

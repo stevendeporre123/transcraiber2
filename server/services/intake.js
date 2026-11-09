@@ -18,9 +18,12 @@ export function blocksFromCues(cues) {
     const longPause = cur && c.start - prevEnd > 8 && ENDS_SENTENCE.test(cur.text);
     const tooLong = cur && (words >= HARD_MAX || (words >= SOFT_MAX && ENDS_SENTENCE.test(cur.text)));
     if (!cur || speakerChange || longPause || tooLong) {
-      cur = { speaker_raw: speaker, text: c.text, t_start: c.start, t_end: c.end };
+      // cues: [tekenpositie in de bloktekst, start, einde] per VTT/SRT-cue, zodat een blok later
+      // exact op een cue-grens gesplitst kan worden met de echte tijd uit de bron.
+      cur = { speaker_raw: speaker, text: c.text, t_start: c.start, t_end: c.end, cues: [[0, c.start, c.end]] };
       blocks.push(cur);
     } else {
+      cur.cues.push([cur.text.length + 1, c.start, c.end]);
       cur.text += ' ' + c.text;
       cur.t_end = Math.max(cur.t_end, c.end);
     }
@@ -146,7 +149,7 @@ function finalize(blocks) {
   return blocks
     .map((b) => ({ ...b, text: b.text.replace(/\s+/g, ' ').trim() }))
     .filter((b) => b.text)
-    .map((b, i) => ({ id: blockId(i + 1), speaker_raw: b.speaker_raw || null, text_raw: b.text, t_start: b.t_start, t_end: b.t_end }));
+    .map((b, i) => ({ id: blockId(i + 1), speaker_raw: b.speaker_raw || null, text_raw: b.text, t_start: b.t_start, t_end: b.t_end, cues: b.cues || null }));
 }
 
 /** Splitst blokken in delen van ongeveer `target` woorden (nooit midden in een blok). */

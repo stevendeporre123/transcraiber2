@@ -23,6 +23,7 @@ export const config = {
 export const STEPS = {
   agenda: { skill: 'agenda-extractor', label: 'Agenda uitlezen' },
   intake: { skill: 'transcript-intake', label: 'Intake (LLM, enkel ruwe PDF/DOCX)' },
+  segmenter: { skill: 'agenda-segmenter', label: 'Opdelen per agendapunt' },
   normalizer: { skill: 'gentse-normalizer', label: 'Gentse normalizer' },
   cleaner: { skill: 'transcript-cleaner', label: 'Transcript cleaner' },
   resolver: { skill: 'speaker-resolver', label: 'Speaker resolver' },

@@ -12,6 +12,8 @@ import { listModels, apiKey, defaultModel } from './services/openrouter.js';
 import { addTermProposal, replacementsFromEdit, recordCorrection } from './services/learn.js';
 import { saveSkillVersion, proposeSkillChange, skillDiff } from './services/skills.js';
 import { meetingBlocks, agendaText, runTest, getTest, TEST_STEPS } from './services/testbench.js';
+import { prepareMeeting, stopPrepare, isPreparing, listSegments, loadBlocks as loadMeetingBlocks, setSegmentStart, addSegment, updateSegment, deleteSegment } from './services/prepare.js';
+import { POINT_TYPES } from './services/agenda-parse.js';
 import { renderLeden, renderBevoegdheden, renderTerminologie, invalidateStreets, TERM_CATEGORIES, REF_KEYS } from './services/context.js';
 
 export const api = express.Router();
@@ -170,8 +172,14 @@ api.post('/skills/apply', (req, res) => {
 const meetingFields = ['titel', 'orgaan', 'commissie', 'voorzitter', 'datum'];
 
 api.get('/meetings', (req, res) => {
-  res.json(db.prepare(`SELECT m.id, m.titel, m.orgaan, m.commissie, m.datum, m.input_name, m.input_type, m.has_timecodes, m.agenda_name, m.agenda_status, m.created_at,
-    (SELECT COUNT(*) FROM runs r WHERE r.meeting_id = m.id) AS runs FROM meetings m ORDER BY m.id DESC`).all());
+  const rows = db.prepare(`SELECT m.id, m.titel, m.orgaan, m.commissie, m.datum, m.input_name, m.input_type, m.has_timecodes, m.agenda_name, m.agenda_status,
+      m.agenda_format, m.prep_status, m.prep_progress, m.created_at,
+      (SELECT COUNT(*) FROM runs r WHERE r.meeting_id = m.id) AS runs,
+      (SELECT COUNT(*) FROM meeting_points p WHERE p.meeting_id = m.id) AS points,
+      (SELECT COUNT(*) FROM meeting_points p WHERE p.meeting_id = m.id AND p.selected = 1) AS points_selected
+    FROM meetings m ORDER BY m.id DESC`).all();
+  for (const r of rows) r.points_found = r.points ? new Set(listSegments(r.id).flatMap((s) => s.point_ids)).size : 0;
+  res.json(rows);
 });
 api.get('/meetings/:id', (req, res) => {
   const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(req.params.id);
@@ -193,7 +201,9 @@ api.post('/meetings', upload.fields([{ name: 'transcript', maxCount: 1 }, { name
   const id = r.lastInsertRowid;
   const af = req.files?.agenda?.[0];
   if (af) await attachAgenda(id, af);
-  res.json(db.prepare('SELECT id, input_type, has_timecodes, agenda_status FROM meetings WHERE id = ?').get(id));
+  // Voorbereiding (intake, agenda, opdelen per agendapunt) meteen starten, op de achtergrond
+  if (req.body.prepare !== '0') prepareMeeting(id, { model: req.body.segmenterModel || undefined }).catch(() => {});
+  res.json(db.prepare('SELECT id, input_type, has_timecodes, agenda_status, prep_status FROM meetings WHERE id = ?').get(id));
 });
 
 async function attachAgenda(meetingId, file) {
@@ -220,11 +230,82 @@ api.post('/meetings/:id/agenda/process', async (req, res) => {
 api.delete('/meetings/:id', (req, res) => {
   const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(req.params.id);
   if (!m) return notFound(res);
-  if ([...db.prepare('SELECT id FROM runs WHERE meeting_id = ?').all(m.id)].some((r) => isActive(r.id))) return res.status(409).json({ error: 'Er loopt nog een verwerking.' });
+  if ([...db.prepare('SELECT id FROM runs WHERE meeting_id = ?').all(m.id)].some((r) => isActive(r.id)) || isPreparing(m.id)) return res.status(409).json({ error: 'Er loopt nog een verwerking of voorbereiding.' });
   db.prepare('DELETE FROM meetings WHERE id = ?').run(m.id);
   for (const f of [m.input_file, m.agenda_file]) if (f) fs.rm(f, { force: true }, () => {});
   res.json({ ok: true });
 });
+
+// ---------------- Voorbereiding (agendapunten en segmenten) ----------------
+const pointRow = (p) => ({ ...p, indieners: json(p.indieners, []) || [] });
+
+api.get('/meetings/:id/prep', (req, res) => {
+  const m = db.prepare(`SELECT id, titel, orgaan, commissie, voorzitter, datum, input_name, input_type, has_timecodes, agenda_name, agenda_status,
+    agenda_format, prep_status, prep_error, prep_progress, created_at FROM meetings WHERE id = ?`).get(req.params.id);
+  if (!m) return notFound(res);
+  const points = db.prepare('SELECT * FROM meeting_points WHERE meeting_id = ? ORDER BY ord').all(m.id).map(pointRow);
+  const blocks = db.prepare('SELECT COUNT(*) n, MAX(t_end) dur, SUM(LENGTH(text) - LENGTH(REPLACE(text, \' \', \'\')) + 1) words FROM meeting_blocks WHERE meeting_id = ?').get(m.id);
+  const runs = db.prepare('SELECT id, label, status, created_at, cost FROM runs WHERE meeting_id = ? ORDER BY id DESC').all(m.id);
+  res.json({ meeting: { ...m, preparing: isPreparing(m.id) }, points, segments: listSegments(m.id), blocks, runs, pointTypes: POINT_TYPES });
+});
+api.post('/meetings/:id/prepare', (req, res) => {
+  const id = Number(req.params.id);
+  if (!db.prepare('SELECT 1 FROM meetings WHERE id = ?').get(id)) return notFound(res);
+  if (isPreparing(id)) return res.status(409).json({ error: 'De voorbereiding loopt al.' });
+  if (!config.mockLlm && !apiKey()) return res.status(400).json({ error: 'Stel eerst een OpenRouter API-key in (Instellingen).' });
+  const { steps, model, agendaModel, context } = req.body || {};
+  prepareMeeting(id, { steps: Array.isArray(steps) && steps.length ? steps : undefined, model: model || undefined, agendaModel: agendaModel || undefined, context: context !== false }).catch(() => {});
+  res.json({ ok: true });
+});
+api.post('/meetings/:id/prepare/stop', (req, res) => res.json({ ok: true, stopped: stopPrepare(req.params.id) }));
+api.get('/meetings/:id/prep-log', (req, res) => {
+  const after = Number(req.query.after) || 0;
+  res.json(db.prepare('SELECT id, ts, level, step, chunk, message, data FROM run_log WHERE meeting_id = ? AND id > ? ORDER BY id').all(req.params.id, after));
+});
+
+api.put('/meetings/:id/points/:pid', (req, res) => {
+  const data = pick(req.body, ['selected', 'nummer', 'titel', 'type', 'bevoegd', 'toelichting']);
+  if (Array.isArray(req.body.indieners)) data.indieners = JSON.stringify(req.body.indieners);
+  const keys = Object.keys(data);
+  if (keys.length) db.prepare(`UPDATE meeting_points SET ${keys.map((k) => `${k} = @${k}`).join(', ')} WHERE id = @id AND meeting_id = @mid`).run({ ...data, id: req.params.pid, mid: req.params.id });
+  res.json(pointRow(db.prepare('SELECT * FROM meeting_points WHERE id = ?').get(req.params.pid)));
+});
+// Selectie in één keer: alle, geen, per type, of enkel wat in de transcriptie gevonden werd
+api.post('/meetings/:id/points/select', (req, res) => {
+  const { mode, type, ids } = req.body || {};
+  const mid = Number(req.params.id);
+  const found = new Set(listSegments(mid).flatMap((s) => s.point_ids));
+  const pts = db.prepare('SELECT id, type FROM meeting_points WHERE meeting_id = ?').all(mid);
+  const want = (p) => (mode === 'all' ? true : mode === 'none' ? false : mode === 'type' ? p.type === type
+    : mode === 'found' ? found.has(p.id) : mode === 'ids' ? (ids || []).map(Number).includes(p.id) : null);
+  const upd = db.prepare('UPDATE meeting_points SET selected = ? WHERE id = ?');
+  db.transaction(() => pts.forEach((p) => { const w = want(p); if (w !== null) upd.run(w ? 1 : 0, p.id); }))();
+  res.json({ ok: true, selected: db.prepare('SELECT COUNT(*) n FROM meeting_points WHERE meeting_id = ? AND selected = 1').get(mid).n });
+});
+
+// Tekst van een stuk van de vergadering (voor het bekijken van een segment en het verleggen van grenzen)
+api.get('/meetings/:id/text', (req, res) => {
+  const from = Math.max(0, Number(req.query.from) || 0);
+  const to = Number(req.query.to);
+  const blocks = loadMeetingBlocks(Number(req.params.id)).filter((b) => b.ord >= from && (Number.isFinite(to) ? b.ord <= to : true))
+    .slice(0, 3000).map((b) => ({ ord: b.ord, block_id: b.block_id, t_start: b.t_start, t_end: b.t_end, speaker: b.speaker_raw, text: b.text, segment_id: b.segment_id }));
+  res.json(blocks);
+});
+api.post('/meetings/:id/segments', (req, res) => {
+  try {
+    const { ord, citaat, pointIds, label } = req.body;
+    res.json({ id: addSegment(Number(req.params.id), { ord, citaat, pointIds: (pointIds || []).map(Number), label }) });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+api.put('/segments/:id', (req, res) => {
+  try {
+    const { ord, citaat, pointIds, label } = req.body;
+    if (ord != null) setSegmentStart(Number(req.params.id), Number(ord), citaat || null);
+    if (pointIds !== undefined || label !== undefined) updateSegment(Number(req.params.id), { pointIds, label });
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+api.delete('/segments/:id', (req, res) => { deleteSegment(Number(req.params.id)); res.json({ ok: true }); });
 
 // ---------------- Runs ----------------
 api.get('/runs', (req, res) => {
@@ -242,6 +323,15 @@ api.post('/runs', async (req, res) => {
   const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(meeting_id);
   if (!m) return notFound(res);
   if (!config.mockLlm && !apiKey()) return res.status(400).json({ error: 'Stel eerst een OpenRouter API-key in (Instellingen).' });
+  if (m.prep_status === 'bezig') return res.status(409).json({ error: 'De voorbereiding van deze vergadering loopt nog.' });
+  if (m.prep_status === 'klaar' && !Array.isArray(options.segmentIds)) {
+    // Segmenten van de geselecteerde agendapunten (+ optioneel de stukken zonder agendapunt)
+    const selected = new Set(db.prepare('SELECT id FROM meeting_points WHERE meeting_id = ? AND selected = 1').all(m.id).map((p) => p.id));
+    options.segmentIds = listSegments(m.id)
+      .filter((s) => (s.point_ids.length ? s.point_ids.some((id) => selected.has(id)) : !!options.includeOverig))
+      .map((s) => s.id);
+    if (!options.segmentIds.length) return res.status(400).json({ error: 'Geen enkel geselecteerd agendapunt werd in de transcriptie teruggevonden.' });
+  }
   const r = db.prepare('INSERT INTO runs (meeting_id, label, options) VALUES (?, ?, ?)').run(m.id, label || null, JSON.stringify(options));
   startRun(r.lastInsertRowid);
   res.json({ id: r.lastInsertRowid });
@@ -409,8 +499,8 @@ api.get('/meetings/:id/blocks', async (req, res) => {
 api.get('/meetings/:id/agenda-text', (req, res) => res.json({ text: agendaText(Number(req.params.id)) }));
 api.post('/test/run', async (req, res) => {
   try {
-    const { step, input, models, skillContent, refs, meetingId, label } = req.body;
-    res.json(await runTest({ step, input, models, skillContent, refs, meetingId: meetingId ? Number(meetingId) : null, label }));
+    const { step, input, models, skillContent, refs, meetingId, label, segmentId } = req.body;
+    res.json(await runTest({ step, input, models, skillContent, refs, meetingId: meetingId ? Number(meetingId) : null, label, segmentId: segmentId ? Number(segmentId) : null }));
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 api.get('/test/runs', (req, res) => {

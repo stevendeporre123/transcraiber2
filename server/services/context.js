@@ -159,7 +159,34 @@ export function renderVergadering(meeting) {
   return lines.join('\n');
 }
 
+const TYPE_LABEL = { mondelinge_vraag: 'mondelinge vraag', voorstel: 'voorstel tot raadsbesluit', schriftelijke_vraag: 'schriftelijke vraag' };
+
+/** Eén agendapunt uitgebreid (met toelichting) voor het stuk transcriptie dat erover gaat. */
+export function renderAgendapunt(points) {
+  const list = (Array.isArray(points) ? points : [points]).filter(Boolean);
+  if (!list.length) return null;
+  return list.map((p) => {
+    const indieners = json(p.indieners, []) || [];
+    const lines = [`Punt ${p.nummer || '?'}${p.code ? ` (${p.code})` : ''}: ${p.titel}`, `Type: ${TYPE_LABEL[p.type] || p.type || 'onbekend'}`];
+    if (indieners.length) lines.push(`Indiener(s): ${indieners.join(', ')}`);
+    if (p.bevoegd) lines.push(`Bevoegd (antwoordt): ${p.bevoegd}`);
+    if (p.sectie) lines.push(`Sectie: ${p.sectie}`);
+    if (p.toelichting) lines.push(`Toelichting uit de agenda:\n${p.toelichting.slice(0, 4000)}`);
+    return lines.join('\n');
+  }).join('\n\n');
+}
+
 export function renderAgenda(meeting) {
+  if (!meeting) return null;
+  // Agendapunten uit de databank (in code ingelezen): bij een selectie enkel de geselecteerde
+  let points = db.prepare('SELECT * FROM meeting_points WHERE meeting_id = ? ORDER BY ord').all(meeting.id);
+  if (points.some((p) => p.selected) && points.some((p) => !p.selected)) points = points.filter((p) => p.selected);
+  if (points.length) {
+    return points.map((p) => {
+      const ind = (json(p.indieners, []) || []).join(', ');
+      return `- Punt ${p.nummer || '?'} [${TYPE_LABEL[p.type] || p.type}]: ${String(p.titel).slice(0, 140)}${ind ? ` | indiener: ${ind}` : ''}${p.bevoegd ? ` | bevoegd: ${p.bevoegd}` : ''}`;
+    }).join('\n');
+  }
   const a = json(meeting?.agenda_json);
   if (!a?.punten?.length) return null;
   let out = '';
@@ -176,7 +203,7 @@ export function renderAgenda(meeting) {
 
 const REF_TITLES = {
   leden: 'LEDEN', bevoegdheden: 'BEVOEGDHEDEN', terminologie: 'GENTSE TERMINOLOGIE',
-  straten: 'STRATENLIJST', agenda: 'AGENDA', vergadering: 'VERGADERING', pipeline: 'PIPELINE',
+  straten: 'STRATENLIJST', agenda: 'AGENDA', agendapunt: 'AGENDAPUNT', vergadering: 'VERGADERING', pipeline: 'PIPELINE',
 };
 export const REF_KEYS = Object.keys(REF_TITLES);
 
@@ -184,7 +211,7 @@ export const REF_KEYS = Object.keys(REF_TITLES);
  * Systeemprompt = skilltekst (zonder frontmatter) + gevraagde referenties.
  * Geeft { system, refs } terug; refs beschrijft per referentie of en hoe groot ze meeging (voor debug).
  */
-export function buildPrompt(skill, { meeting, text } = {}) {
+export function buildPrompt(skill, { meeting, text, points } = {}) {
   const body = skill.content.replace(/^---\n[\s\S]*?\n---\n?/, '').trim();
   const parts = [body];
   const refs = [];
@@ -200,6 +227,9 @@ export function buildPrompt(skill, { meeting, text } = {}) {
     } else if (ref === 'agenda') {
       content = renderAgenda(meeting);
       if (!content) note = meeting?.agenda_name ? `agenda niet uitgelezen (status: ${meeting.agenda_status || '?'})` : 'geen agenda opgeladen';
+    } else if (ref === 'agendapunt') {
+      content = renderAgendapunt(points);
+      if (!content) note = 'stuk niet aan een agendapunt gekoppeld';
     } else if (ref === 'vergadering') content = renderVergadering(meeting);
     else if (ref === 'pipeline') content = db.prepare("SELECT content FROM skills WHERE naam = 'verslag-pipeline'").get()?.content;
     refs.push({ ref, included: !!content, chars: content ? content.length : 0, lines: content ? content.split('\n').length : 0, note });

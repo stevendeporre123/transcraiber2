@@ -6,7 +6,7 @@ description: >
   gemeenteraadstermen. Werkt op genummerde tekstblokken zonder tijdcodes en
   zonder extra context, enkel met de meegegeven referentielijsten. Tweede stap,
   vóór transcript-cleaner. Doet geen taalcorrectie en verwijdert geen spraakruis.
-refs: [leden, terminologie, straten, agenda]
+refs: [leden, terminologie, straten, agenda, agendapunt]
 ---
 
 # Skill: gentse-normalizer
@@ -25,6 +25,11 @@ niets anders aan: geen spraakruis, geen grammatica, geen zinsbouw.
   indieners, bevoegde schepenen en de namen, projecten en organisaties die in
   de agenda voorkomen. De schrijfwijze in de agenda is officieel: gebruik ze
   voor termen die in de tekst duidelijk naar een agendapunt verwijzen.
+
+- **AGENDAPUNT** (optioneel): het agendapunt waar dit stuk transcriptie over gaat,
+  met indiener, bevoegde schepen en de toelichting van de vraag. Namen, plaatsen en
+  organisaties uit de toelichting zijn de juiste schrijfwijze voor wat in dit stuk
+  besproken wordt.
 
 Gebruik uitsluitend wat in die lijsten staat. Voeg geen namen toe uit eigen kennis.
 

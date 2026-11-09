@@ -3,61 +3,20 @@ let settings = {};
 let runsTable;
 const selected = new Set();
 
-function runOptionsHtml(prefix, opts = {}) {
-  const steps = [['normalizer', 'Gentse normalizer'], ['cleaner', 'Transcript cleaner'], ['resolver', 'Speaker resolver'], ['writer', 'Verslag writer'], ['agenda', 'Agenda'], ['intake', 'LLM-intake']];
-  return `
-    <div class="row g-2">
-      <div class="col-md-6"><label class="form-label">Label (optioneel)</label>
-        <input class="form-control" name="label" value="${App.esc(opts.label || '')}" placeholder="bv. test Gemini vs Claude"></div>
-      <div class="col-md-3"><label class="form-label">Woorden per deel</label>
-        <input type="number" class="form-control" name="chunkWords" min="300" max="8000" step="100" value="${App.esc(opts.chunkWords || settings.chunk_words || 2000)}"></div>
-      <div class="col-md-3 d-flex flex-column justify-content-end">
-        <div class="form-check"><input class="form-check-input" type="checkbox" name="writer" id="${prefix}-writer" ${opts.writer === false ? '' : 'checked'}>
-          <label class="form-check-label" for="${prefix}-writer">Verslag met samenvatting</label></div>
-        <div class="form-check"><input class="form-check-input" type="checkbox" name="llmIntake" id="${prefix}-llmi" ${opts.llmIntake ? 'checked' : ''}>
-          <label class="form-check-label" for="${prefix}-llmi" title="Enkel voor rommelige PDF/DOCX zonder duidelijke structuur">Intake via LLM</label></div>
-      </div>
-    </div>
-    <details class="mt-3" ${opts.blockFrom || opts.blockTo || (opts.stopAfter && opts.stopAfter !== 'writer') ? 'open' : ''}><summary class="fw-semibold">Testrun: deel van de input / stoppen na een stap</summary>
-      <div class="row g-2 mt-1">
-        <div class="col-md-3"><label class="form-label small mb-0">Enkel blokken van</label>
-          <input type="number" min="1" class="form-control form-control-sm" name="blockFrom" value="${App.esc(opts.blockFrom || '')}" placeholder="1"></div>
-        <div class="col-md-3"><label class="form-label small mb-0">tot en met</label>
-          <input type="number" min="1" class="form-control form-control-sm" name="blockTo" value="${App.esc(opts.blockTo || '')}" placeholder="alles"></div>
-        <div class="col-md-6"><label class="form-label small mb-0">Stoppen na</label>
-          <select class="form-select form-select-sm" name="stopAfter">
-            ${[['writer', 'volledige pipeline'], ['normalizer', 'gentse-normalizer'], ['cleaner', 'transcript-cleaner'], ['resolver', 'speaker-resolver']]
-              .map(([v, l]) => `<option value="${v}" ${(opts.stopAfter || 'writer') === v ? 'selected' : ''}>${l}</option>`).join('')}
-          </select></div>
-      </div>
-      <div class="form-text">Blokken bekijk je in de <a href="testen.html">Testbank</a>. Voor één skill op een klein stuk is de Testbank sneller.</div>
-    </details>
-    <details class="mt-3" ${opts.models ? 'open' : ''}><summary class="fw-semibold">Modellen per stap (OpenRouter)</summary>
-      <div class="row g-2 mt-1">
-        ${steps.map(([k, l]) => `<div class="col-md-4"><label class="form-label small mb-0">${l}</label>
-          <input class="form-control form-control-sm" name="model_${k}" list="models-list" value="${App.esc(opts.models?.[k] || '')}" placeholder="${App.esc(settings.effective?.[k] || '')}"></div>`).join('')}
-      </div>
-      <div class="form-text">Leeg = standaard uit Instellingen.</div>
-    </details>`;
-}
-
-function readRunOptions(form) {
-  const f = App.readForm(form);
-  const models = {};
-  for (const [k, v] of Object.entries(f)) if (k.startsWith('model_') && v) models[k.slice(6)] = v;
-  return {
-    label: f.label,
-    options: {
-      chunkWords: Number(f.chunkWords) || undefined, writer: !!f.writer, llmIntake: !!f.llmIntake, models,
-      blockFrom: Number(f.blockFrom) || undefined, blockTo: Number(f.blockTo) || undefined, stopAfter: f.stopAfter || 'writer',
-    },
-  };
-}
+const runOptionsHtml = (prefix, opts) => App.runOptionsHtml(prefix, opts, settings);
+const readRunOptions = (form) => App.readRunOptions(form);
 
 function modelsSummary(opt) {
   const m = opt?.models || {};
   const uniq = [...new Set(Object.entries(m).filter(([k]) => ['normalizer', 'cleaner', 'resolver', 'writer'].includes(k)).map(([, v]) => v))];
   return uniq.map((x) => `<code class="small">${App.esc(x)}</code>`).join('<br>') || '<span class="text-body-secondary">standaard</span>';
+}
+
+let meetingsTable;
+async function loadMeetings() {
+  const rows = await App.api('/meetings');
+  meetingsTable.clear().rows.add(rows).draw(false);
+  if (rows.some((m) => m.prep_status === 'bezig')) setTimeout(loadMeetings, 3000);
 }
 
 async function loadRuns() {
@@ -101,6 +60,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     ],
   });
   loadRuns();
+  meetingsTable = App.table('#meetings', {
+    order: [[0, 'desc']], pageLength: 10,
+    columns: [
+      { data: 'id' },
+      { data: null, render: (m) => `<a href="vergadering.html?id=${m.id}" class="fw-semibold">${App.esc(m.titel || (m.orgaan === 'commissie' ? `Commissie ${m.commissie || ''}` : 'Gemeenteraad'))}</a><div class="small text-body-secondary">${App.esc(m.datum || '')}</div>` },
+      { data: null, render: (m) => `${App.esc(m.input_name)} <span class="badge text-bg-light border">${App.esc(m.input_type)}</span>${m.has_timecodes ? ' <i class="bi bi-clock" title="met tijdcodes"></i>' : ''}` },
+      { data: null, render: (m) => (m.agenda_name ? `${App.esc(m.agenda_name)}${m.agenda_format ? ` <span class="badge text-bg-light border">${App.esc(m.agenda_format)}</span>` : ''}` : '<span class="text-body-secondary">geen</span>') },
+      { data: null, render: (m) => `${App.badgeStatus(m.prep_status || 'geen')}${m.prep_status === 'bezig' ? `<div class="small text-body-secondary">${App.esc(m.prep_progress || '')}</div>` : ''}` },
+      { data: null, render: (m) => (m.points ? `${m.points} <span class="small text-body-secondary">(${m.points_found} gevonden, ${m.points_selected} geselecteerd)</span>` : '') },
+      { data: 'runs' },
+      { data: null, orderable: false, className: 'text-end text-nowrap', render: (m) => `<a class="btn btn-sm btn-outline-primary" href="vergadering.html?id=${m.id}" title="Openen"><i class="bi bi-list-check"></i></a>
+          <button class="btn btn-sm btn-outline-danger m-del" data-id="${m.id}" title="Verwijderen"><i class="bi bi-trash"></i></button>` },
+    ],
+  });
+  loadMeetings();
+  $('#meetings').on('click', '.m-del', async (e) => {
+    const id = e.currentTarget.dataset.id;
+    if (!(await App.confirm(`Vergadering ${id} met al haar runs verwijderen?`))) return;
+    try { await App.api(`/meetings/${id}`, { method: 'DELETE' }); loadMeetings(); loadRuns(); } catch (err) { App.error(err); }
+  });
 
   $('#runs').on('change', '.sel', (e) => {
     const id = Number(e.target.dataset.id);
@@ -134,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   document.getElementById('btn-new').onclick = () => {
-    document.getElementById('run-options').innerHTML = runOptionsHtml('new');
+    document.getElementById('new-segmodel').placeholder = settings.effective?.segmenter || '';
     App.modal('m-new').show();
   };
   const fNew = document.getElementById('f-new');
@@ -154,13 +133,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const fd = new FormData();
       fd.append('transcript', fNew.transcript.files[0]);
       if (fNew.agenda.files[0]) fd.append('agenda', fNew.agenda.files[0]);
-      for (const k of ['orgaan', 'commissie', 'datum', 'voorzitter', 'titel']) fd.append(k, fNew[k].value);
+      for (const k of ['orgaan', 'commissie', 'datum', 'voorzitter', 'titel', 'segmenterModel']) fd.append(k, fNew[k].value);
       const m = await App.api('/meetings', { method: 'POST', form: fd });
-      const { label, options } = readRunOptions(fNew);
-      const r = await App.api('/runs', { method: 'POST', body: { meeting_id: m.id, label, options } });
       App.modal('m-new').hide();
       fNew.reset();
-      location.href = `run.html?id=${r.id}`;
+      location.href = `vergadering.html?id=${m.id}`;
     } catch (err) { App.error(err); } finally { btn.disabled = false; }
   };
 

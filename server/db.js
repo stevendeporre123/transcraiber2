@@ -197,7 +197,51 @@ CREATE TABLE IF NOT EXISTS test_runs (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Voorbereiding per vergadering: blokken (met tijdcodes), agendapunten en segmenten
+CREATE TABLE IF NOT EXISTS meeting_blocks (
+  meeting_id INTEGER NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  ord INTEGER NOT NULL,
+  block_id TEXT NOT NULL,
+  t_start REAL,
+  t_end REAL,
+  speaker_raw TEXT,
+  text TEXT NOT NULL,
+  cues TEXT,                   -- JSON [[tekenpositie, start, einde], ...] (VTT/SRT)
+  segment_id INTEGER,
+  PRIMARY KEY (meeting_id, ord)
+);
+
+CREATE TABLE IF NOT EXISTS meeting_points (
+  id INTEGER PRIMARY KEY,
+  meeting_id INTEGER NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  ord INTEGER NOT NULL,
+  nummer TEXT,
+  code TEXT,                   -- dossiercode, bv. 2026_MV_00773
+  type TEXT,                   -- mondelinge_vraag, besluit, voorstel, motie, amendement, interpellatie, overig
+  titel TEXT,
+  indieners TEXT,              -- JSON array
+  bevoegd TEXT,
+  sectie TEXT,
+  toelichting TEXT,
+  selected INTEGER NOT NULL DEFAULT 1,
+  bron TEXT                    -- code, llm, manueel
+);
+
+CREATE TABLE IF NOT EXISTS meeting_segments (
+  id INTEGER PRIMARY KEY,
+  meeting_id INTEGER NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  point_id INTEGER REFERENCES meeting_points(id) ON DELETE SET NULL,
+  start_ord INTEGER NOT NULL,  -- eerste blok (ord in meeting_blocks); het segment loopt tot het volgende segment
+  label TEXT,                  -- voor segmenten zonder agendapunt: opening, pauze, ...
+  zekerheid TEXT,
+  bewijs TEXT,                 -- citaat waarop de overgang gebaseerd is
+  bron TEXT,                   -- model, manueel
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_terms_cat ON terms(categorie);
+CREATE INDEX IF NOT EXISTS idx_points_meeting ON meeting_points(meeting_id, ord);
+CREATE INDEX IF NOT EXISTS idx_segments_meeting ON meeting_segments(meeting_id, start_ord);
 CREATE INDEX IF NOT EXISTS idx_log_run ON run_log(run_id, id);
 CREATE INDEX IF NOT EXISTS idx_blocks_ord ON run_blocks(run_id, ord);
 `);
@@ -209,6 +253,14 @@ const addColumn = (table, col, def) => {
 };
 addColumn('run_steps', 'system', 'TEXT');
 addColumn('run_steps', 'attempts', 'INTEGER');
+addColumn('run_blocks', 'segment_id', 'INTEGER');
+addColumn('meeting_segments', 'point_ids', 'TEXT'); // JSON: één segment kan meerdere punten behandelen
+addColumn('run_log', 'meeting_id', 'INTEGER');
+addColumn('meetings', 'prep_status', "TEXT DEFAULT 'geen'"); // geen, bezig, klaar, fout
+addColumn('meetings', 'prep_error', 'TEXT');
+addColumn('meetings', 'prep_progress', 'TEXT');
+addColumn('meetings', 'agenda_format', 'TEXT');
+addColumn('skills', 'seed_content', 'TEXT'); // meegeleverde tekst (om updates te kunnen uitrollen)
 
 export function getSetting(key, fallback = null) {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);

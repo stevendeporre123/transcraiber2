@@ -84,7 +84,7 @@ const App = {
   },
 
   badgeStatus(status) {
-    const map = { klaar: 'success', bezig: 'primary', wachtrij: 'secondary', fout: 'danger', gestopt: 'warning', voorstel: 'warning', actief: 'success', inactief: 'secondary' };
+    const map = { klaar: 'success', bezig: 'primary', wachtrij: 'secondary', fout: 'danger', gestopt: 'warning', geen: 'light border', nieuw: 'info', voorstel: 'warning', actief: 'success', inactief: 'secondary' };
     return `<span class="badge text-bg-${map[status] || 'secondary'}">${App.esc(status)}</span>`;
   },
 
@@ -97,6 +97,13 @@ const App = {
     if (sec == null) return '';
     const s = Math.floor(sec);
     return [Math.floor(s / 3600), Math.floor((s % 3600) / 60), s % 60].map((n) => String(n).padStart(2, '0')).join(':');
+  },
+
+  typeBadge(type) {
+    const map = { mondelinge_vraag: ['info', 'mondelinge vraag'], interpellatie: ['primary', 'interpellatie'], voorstel: ['primary', 'voorstel'],
+      motie: ['warning', 'motie'], amendement: ['warning', 'amendement'], besluit: ['secondary', 'besluit'], overig: ['light border', 'overig'] };
+    const [c, l] = map[type] || ['light border', type || '?'];
+    return `<span class="badge text-bg-${c}">${App.esc(l)}</span>`;
   },
 
   fmtCost(c) { return c ? `$${Number(c).toFixed(4)}` : '–'; },
@@ -187,12 +194,66 @@ const App = {
     return parts.map((p) => (p.added ? `<ins>${App.esc(p.value)}</ins>` : p.removed ? `<del>${App.esc(p.value)}</del>` : App.esc(p.value))).join('');
   },
 
+  runOptionsHtml(prefix, opts = {}, settings = {}) {
+    const steps = [['normalizer', 'Gentse normalizer'], ['cleaner', 'Transcript cleaner'], ['resolver', 'Speaker resolver'], ['writer', 'Verslag writer'], ['agenda', 'Agenda'], ['intake', 'LLM-intake']];
+    return `
+      <div class="row g-2">
+        <div class="col-md-6"><label class="form-label">Label (optioneel)</label>
+          <input class="form-control" name="label" value="${App.esc(opts.label || '')}" placeholder="bv. test Gemini vs Claude"></div>
+        <div class="col-md-3"><label class="form-label">Woorden per deel</label>
+          <input type="number" class="form-control" name="chunkWords" min="300" max="8000" step="100" value="${App.esc(opts.chunkWords || settings.chunk_words || 2000)}"></div>
+        <div class="col-md-3 d-flex flex-column justify-content-end">
+          <div class="form-check"><input class="form-check-input" type="checkbox" name="writer" id="${prefix}-writer" ${opts.writer === false ? '' : 'checked'}>
+            <label class="form-check-label" for="${prefix}-writer">Verslag met samenvatting</label></div>
+          <div class="form-check"><input class="form-check-input" type="checkbox" name="llmIntake" id="${prefix}-llmi" ${opts.llmIntake ? 'checked' : ''}>
+            <label class="form-check-label" for="${prefix}-llmi" title="Enkel voor rommelige PDF/DOCX zonder duidelijke structuur">Intake via LLM</label></div>
+        ${opts.prepared ? `<div class="form-check"><input class="form-check-input" type="checkbox" name="includeOverig" id="${prefix}-overig" ${opts.includeOverig ? 'checked' : ''}>
+          <label class="form-check-label" for="${prefix}-overig" title="Opening, pauzes, procedure: stukken die bij geen agendapunt horen">Ook stukken zonder agendapunt</label></div>` : ''}
+        </div>
+      </div>
+      <details class="mt-3" ${opts.blockFrom || opts.blockTo || (opts.stopAfter && opts.stopAfter !== 'writer') ? 'open' : ''}><summary class="fw-semibold">Testrun: deel van de input / stoppen na een stap</summary>
+        <div class="row g-2 mt-1">
+          <div class="col-md-3"><label class="form-label small mb-0">Enkel blokken van</label>
+            <input type="number" min="1" class="form-control form-control-sm" name="blockFrom" value="${App.esc(opts.blockFrom || '')}" placeholder="1"></div>
+          <div class="col-md-3"><label class="form-label small mb-0">tot en met</label>
+            <input type="number" min="1" class="form-control form-control-sm" name="blockTo" value="${App.esc(opts.blockTo || '')}" placeholder="alles"></div>
+          <div class="col-md-6"><label class="form-label small mb-0">Stoppen na</label>
+            <select class="form-select form-select-sm" name="stopAfter">
+              ${[['writer', 'volledige pipeline'], ['normalizer', 'gentse-normalizer'], ['cleaner', 'transcript-cleaner'], ['resolver', 'speaker-resolver']]
+                .map(([v, l]) => `<option value="${v}" ${(opts.stopAfter || 'writer') === v ? 'selected' : ''}>${l}</option>`).join('')}
+            </select></div>
+        </div>
+        <div class="form-text">Blokken bekijk je in de <a href="testen.html">Testbank</a>. Voor één skill op een klein stuk is de Testbank sneller.</div>
+      </details>
+      <details class="mt-3" ${opts.models ? 'open' : ''}><summary class="fw-semibold">Modellen per stap (OpenRouter)</summary>
+        <div class="row g-2 mt-1">
+          ${steps.map(([k, l]) => `<div class="col-md-4"><label class="form-label small mb-0">${l}</label>
+            <input class="form-control form-control-sm" name="model_${k}" list="models-list" value="${App.esc(opts.models?.[k] || '')}" placeholder="${App.esc(settings.effective?.[k] || '')}"></div>`).join('')}
+        </div>
+        <div class="form-text">Leeg = standaard uit Instellingen.</div>
+      </details>`;
+  },
+
+  readRunOptions(form) {
+    const f = App.readForm(form);
+    const models = {};
+    for (const [k, v] of Object.entries(f)) if (k.startsWith('model_') && v) models[k.slice(6)] = v;
+    return {
+      label: f.label,
+      options: {
+        chunkWords: Number(f.chunkWords) || undefined, writer: !!f.writer, llmIntake: !!f.llmIntake, models,
+        blockFrom: Number(f.blockFrom) || undefined, blockTo: Number(f.blockTo) || undefined, stopAfter: f.stopAfter || 'writer',
+      includeOverig: !!f.includeOverig,
+      },
+    };
+  },
+
   renderNav() {
     const page = location.pathname.split('/').pop() || 'index.html';
     const items = NAV.map(([href, icon, label]) => {
       const badge = href === 'termen.html' ? '<span id="nav-badge-terms" class="badge rounded-pill text-bg-warning ms-1"></span>'
         : href === 'skills.html' ? '<span id="nav-badge-skills" class="badge rounded-pill text-bg-info ms-1" title="Onverwerkte correcties"></span>' : '';
-      const active = page === href || (page === 'run.html' && href === 'index.html') || (page === 'vergelijk.html' && href === 'index.html');
+      const active = page === href || (['run.html', 'vergelijk.html', 'vergadering.html'].includes(page) && href === 'index.html');
       return `<li class="nav-item"><a class="nav-link ${active ? 'active' : ''}" href="${href}"><i class="bi ${icon}"></i> ${label}${badge}</a></li>`;
     }).join('');
     const nav = document.createElement('nav');

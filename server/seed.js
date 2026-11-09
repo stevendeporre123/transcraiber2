@@ -149,17 +149,36 @@ export function parseSkillFile(text) {
   return meta;
 }
 
+/**
+ * Skills uit seed/skills: ontbrekende toevoegen. Een meegeleverde skill die de gebruiker niet zelf
+ * aangepast heeft, wordt bijgewerkt naar de nieuwe meegeleverde tekst (als nieuwe versie, auteur "seed").
+ */
 function seedSkills() {
   const dir = path.join(SEED, 'skills');
-  const ins = db.prepare(`INSERT INTO skills (naam, beschrijving, content, refs, in_pipeline) VALUES (?, ?, ?, ?, ?)`);
+  const ins = db.prepare(`INSERT INTO skills (naam, beschrijving, content, refs, in_pipeline, seed_content) VALUES (?, ?, ?, ?, ?, ?)`);
   const insV = db.prepare(`INSERT INTO skill_versions (skill_id, version, content, note, author) VALUES (?, 1, ?, 'Initiële import', 'seed')`);
   for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.md')).sort()) {
     const content = fs.readFileSync(path.join(dir, f), 'utf8');
     const meta = parseSkillFile(content);
     const naam = meta.name || f.replace(/\.md$/, '');
-    if (db.prepare('SELECT 1 FROM skills WHERE naam = ?').get(naam)) continue;
-    const r = ins.run(naam, meta.description, content, JSON.stringify(meta.refs), meta.in_pipeline ? 1 : 0);
-    insV.run(r.lastInsertRowid, content);
+    const existing = db.prepare('SELECT * FROM skills WHERE naam = ?').get(naam);
+    if (!existing) {
+      const r = ins.run(naam, meta.description, content, JSON.stringify(meta.refs), meta.in_pipeline ? 1 : 0, content);
+      insV.run(r.lastInsertRowid, content);
+      continue;
+    }
+    if (existing.content === content) continue;
+    // Niet door de gebruiker aangepast? Dan mag de nieuwe meegeleverde versie erover.
+    const authors = db.prepare('SELECT DISTINCT author FROM skill_versions WHERE skill_id = ?').all(existing.id).map((v) => v.author);
+    const untouched = existing.seed_content != null
+      ? existing.content === existing.seed_content
+      : authors.every((a) => a === 'seed');
+    if (!untouched) continue;
+    const version = existing.version + 1;
+    db.prepare(`UPDATE skills SET content = ?, beschrijving = ?, refs = ?, in_pipeline = ?, version = ?, seed_content = ?, updated_at = datetime('now') WHERE id = ?`)
+      .run(content, meta.description, JSON.stringify(meta.refs), meta.in_pipeline ? 1 : 0, version, content, existing.id);
+    db.prepare(`INSERT INTO skill_versions (skill_id, version, content, note, author) VALUES (?, ?, ?, 'Update van de meegeleverde skill', 'seed')`)
+      .run(existing.id, version, content);
   }
 }
 

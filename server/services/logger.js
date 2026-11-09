@@ -13,13 +13,13 @@ function serialize(data) {
 }
 
 /** log({ runId, testId, level, step, chunk, message, data }) */
-export function log({ runId = null, testId = null, level = 'info', step = null, chunk = null, message, data }) {
+export function log({ runId = null, testId = null, meetingId = null, level = 'info', step = null, chunk = null, message, data }) {
   try {
-    db.prepare('INSERT INTO run_log (run_id, test_id, level, step, chunk, message, data) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run(runId, testId, level, step, chunk, message, serialize(data));
+    db.prepare('INSERT INTO run_log (run_id, test_id, meeting_id, level, step, chunk, message, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(runId, testId, meetingId, level, step, chunk, message, serialize(data));
   } catch { /* loggen mag nooit de pipeline breken */ }
   if ((LEVELS[level] ?? 20) >= stdoutLevel) {
-    const where = [runId != null ? `run ${runId}` : testId != null ? `test ${testId}` : null, step, chunk != null ? `deel ${chunk === 999 ? 'slot' : chunk + 1}` : null].filter(Boolean).join(' · ');
+    const where = [runId != null ? `run ${runId}` : testId != null ? `test ${testId}` : meetingId != null ? `vergadering ${meetingId}` : null, step, chunk != null ? `deel ${chunk === 999 ? 'slot' : chunk + 1}` : null].filter(Boolean).join(' · ');
     const line = `[${new Date().toISOString()}] ${level.toUpperCase().padEnd(5)} ${where ? `[${where}] ` : ''}${message}`;
     (level === 'error' ? console.error : level === 'warn' ? console.warn : console.log)(line);
   }

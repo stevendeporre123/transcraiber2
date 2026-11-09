@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vergadering · Transcraiber</title>
+  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/vendor/datatables-bs5/css/dataTables.bootstrap5.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid">
+  <div class="d-flex flex-wrap gap-2 align-items-start mb-2">
+    <div class="me-auto">
+      <h1 class="h4 mb-0" id="v-title">…</h1>
+      <div class="small text-body-secondary" id="v-meta"></div>
+    </div>
+    <button class="btn btn-danger d-none" id="v-stop"><i class="bi bi-stop-fill"></i> Stop</button>
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" id="v-redo-btn"><i class="bi bi-arrow-repeat"></i> Opnieuw voorbereiden</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item v-redo" data-steps="segment" href="#">Enkel opnieuw opdelen per agendapunt</a></li>
+        <li><a class="dropdown-item v-redo" data-steps="agenda,segment" href="#">Agenda opnieuw inlezen + opdelen</a></li>
+        <li><a class="dropdown-item v-redo" data-steps="intake,agenda,segment" href="#">Alles (intake, agenda, opdelen)</a></li>
+      </ul>
+    </div>
+    <button class="btn btn-primary" id="v-run" disabled><i class="bi bi-play-fill"></i> Verwerk geselecteerde punten</button>
+  </div>
+
+  <div id="v-status" class="mb-2"></div>
+  <div class="row g-2 mb-3" id="v-stats"></div>
+
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#t-points">Agendapunten</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-segments">Tijdlijn (segmenten)</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-plog">Log voorbereiding</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-vruns">Runs</button></li>
+  </ul>
+  <div class="tab-content border border-top-0 rounded-bottom p-3">
+    <div class="tab-pane fade show active" id="t-points">
+      <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+        <span class="small fw-semibold">Selectie:</span>
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-secondary v-sel" data-mode="all">Alle</button>
+          <button class="btn btn-outline-secondary v-sel" data-mode="none">Geen</button>
+          <button class="btn btn-outline-info v-sel" data-mode="type" data-type="mondelinge_vraag"><i class="bi bi-chat-dots"></i> Enkel mondelinge vragen</button>
+          <button class="btn btn-outline-secondary v-sel" data-mode="found">Enkel teruggevonden</button>
+        </div>
+        <select class="form-select form-select-sm w-auto" id="v-filter-type"><option value="">Alle types</option></select>
+        <div class="form-check form-switch ms-2"><input class="form-check-input" type="checkbox" id="v-only-sel"><label class="form-check-label small" for="v-only-sel">Toon enkel geselecteerde</label></div>
+        <span class="small text-body-secondary ms-auto" id="v-sel-info"></span>
+      </div>
+      <table id="v-points" class="table table-sm table-hover w-100">
+        <thead><tr><th>Beh.</th><th>Nr</th><th>Type</th><th>Agendapunt</th><th>In de transcriptie</th><th></th></tr></thead>
+      </table>
+    </div>
+    <div class="tab-pane fade" id="t-segments">
+      <div class="d-flex mb-2"><span class="small text-body-secondary me-auto">Elk segment loopt tot het volgende begint. Klik op een segment om de tekst te zien en de grens te verleggen.</span></div>
+      <table id="v-segments" class="table table-sm table-hover w-100">
+        <thead><tr><th>#</th><th>Tijd</th><th>Blokken</th><th>Woorden</th><th>Agendapunt(en)</th><th>Zekerheid</th><th>Waarom</th><th></th></tr></thead>
+      </table>
+    </div>
+    <div class="tab-pane fade" id="t-plog">
+      <table id="v-log" class="table table-sm w-100"><thead><tr><th>Tijd</th><th>Niveau</th><th>Stap</th><th>Bericht</th></tr></thead></table>
+    </div>
+    <div class="tab-pane fade" id="t-vruns"><div id="v-runs"></div></div>
+  </div>
+</div>
+
+<!-- Segment bekijken en aanpassen -->
+<div class="modal fade" id="m-seg" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="s-title">Segment</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-2 mb-2 align-items-end">
+          <div class="col-md-7"><label class="form-label small mb-0">Agendapunt(en) in dit segment</label>
+            <select class="form-select form-select-sm" id="s-points" multiple size="4"></select>
+            <div class="form-text">Ctrl/Cmd-klik voor meerdere (samen behandelde vragen). Geen punt = stuk zonder agendapunt.</div></div>
+          <div class="col-md-3"><label class="form-label small mb-0">Label (zonder agendapunt)</label><input class="form-control form-control-sm" id="s-label" placeholder="Opening, Pauze, …"></div>
+          <div class="col-md-2 d-grid"><button class="btn btn-sm btn-primary" id="s-save-points"><i class="bi bi-check2"></i> Koppeling opslaan</button></div>
+        </div>
+        <div class="alert alert-light border small py-2 mb-2"><i class="bi bi-scissors"></i> <b>Grens verleggen:</b> selecteer met de muis de eerste woorden van het punt in een blok
+          en klik <b>Begin hier</b> bij dat blok (het blok wordt op die plek geknipt, met behoud van de tijdcodes). Zonder selectie begint het segment bij het begin van het blok.</div>
+        <div id="s-text"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-danger me-auto" id="s-delete"><i class="bi bi-trash"></i> Segment verwijderen (samenvoegen met vorige)</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Sluiten</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Punt manueel aanduiden -->
+<div class="modal fade" id="m-place" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Begin van <span id="p-name"></span> aanduiden</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-2 mb-2">
+          <div class="col-md-4"><input class="form-control form-control-sm" id="p-search" placeholder="Zoek in de transcriptie (naam, onderwerp)…"></div>
+          <div class="col-md-8 small text-body-secondary pt-1">Selecteer de eerste woorden in een blok en klik <b>Begin hier</b>. Het nieuwe segment loopt tot het volgende segment.</div>
+        </div>
+        <div id="p-text" style="max-height:65vh; overflow:auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Verwerken -->
+<div class="modal fade" id="m-run" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form class="modal-content" id="f-run">
+      <div class="modal-header"><h5 class="modal-title">Geselecteerde punten verwerken</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <p class="small" id="r-summary"></p>
+        <div id="r-options"></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-play-fill"></i> Start</button></div>
+    </form>
+  </div>
+</div>
+
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/vendor/datatables/dataTables.min.js"></script>
+<script src="/vendor/datatables-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/vergadering.js"></script>
+</body>
+</html>

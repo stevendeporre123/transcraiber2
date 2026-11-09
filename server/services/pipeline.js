@@ -55,7 +55,7 @@ function addWarning(runId, w) {
  * `logInput` (optioneel): de blokken [{id, speaker, text}] die naar het model gaan, voor het
  * debug-log (wat heeft het model per blok veranderd).
  */
-async function callStep(ctx, step, chunk, { user, refText, isJson = false, validate, logInput }) {
+async function callStep(ctx, step, chunk, { user, refText, isJson = false, validate, logInput, points }) {
   const { run, meeting, models } = ctx;
   const L = (level, message, data) => log({ runId: run.id, level, step, chunk, message, data });
   checkStop(ctx);
@@ -66,14 +66,14 @@ async function callStep(ctx, step, chunk, { user, refText, isJson = false, valid
     return validate(cached.output).value;
   }
   const skill = getSkill(STEPS[step].skill);
-  const { system, refs, skillChars } = buildPrompt(skill, { meeting, text: refText ?? user });
+  const { system, refs, skillChars } = buildPrompt(skill, { meeting, text: refText ?? user, points });
   const model = models[step] || defaultModel(step);
   L('info', `aanroep ${model} (skill ${skill.naam} v${skill.version})`, {
     model, skill: `${skill.naam} v${skill.version}`, skill_tekens: skillChars, systeemprompt_tekens: system.length,
     invoer_tekens: user.length, invoer_blokken: logInput?.length,
     referenties: refs.map((r) => `${r.ref}: ${r.included ? `${r.chars} tekens, ${r.lines} regels` : 'NIET meegestuurd'}${r.note ? ` (${r.note})` : ''}`),
   });
-  for (const r of refs) if (!r.included && r.ref !== 'straten') L('warn', `referentie ${r.ref} niet meegestuurd${r.note ? `: ${r.note}` : ''}`);
+  for (const r of refs) if (!r.included && r.ref !== 'straten' && r.ref !== 'agendapunt') L('warn', `referentie ${r.ref} niet meegestuurd${r.note ? `: ${r.note}` : ''}`);
 
   let prompt = user;
   let lastErr;
@@ -136,6 +136,7 @@ async function intake(ctx) {
   const existing = db.prepare('SELECT COUNT(*) n FROM run_blocks WHERE run_id = ?').get(run.id).n;
   if (existing) return;
   setProgress(run.id, 'Intake');
+  if (ctx.segmented) return intakeFromSegments(ctx);
   const input = await readInput(meeting.input_file, meeting.input_type);
   let blocks;
   if (input.cues) {
@@ -168,6 +169,36 @@ async function intake(ctx) {
   const ins = db.prepare(`INSERT INTO run_blocks (run_id, block_id, ord, t_start, t_end, speaker_raw, text_raw, text_norm, text_clean, text_final)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   db.transaction(() => blocks.forEach((b, i) => ins.run(run.id, b.id, i, b.t_start, b.t_end, b.speaker_raw, b.text_raw, b.text_raw, b.text_raw, b.text_raw)))();
+}
+
+/**
+ * Voorbereide vergadering: neem de blokken (met tijdcodes) van de gekozen segmenten over uit
+ * meeting_blocks. options.segmentIds wordt bij het aanmaken van de run vastgelegd.
+ */
+function intakeFromSegments(ctx) {
+  const { run, meeting, options } = ctx;
+  const segs = db.prepare('SELECT * FROM meeting_segments WHERE meeting_id = ? ORDER BY start_ord').all(meeting.id);
+  const wanted = Array.isArray(options.segmentIds) && options.segmentIds.length ? new Set(options.segmentIds.map(Number)) : null;
+  const chosen = wanted ? segs.filter((s) => wanted.has(s.id)) : segs;
+  const ids = new Set(chosen.map((s) => s.id));
+  let blocks = db.prepare('SELECT * FROM meeting_blocks WHERE meeting_id = ? ORDER BY ord').all(meeting.id).filter((b) => ids.has(b.segment_id));
+  if (options.blockFrom || options.blockTo) {
+    const from = Number(options.blockFrom) || 1;
+    const to = Number(options.blockTo) || Infinity;
+    blocks = blocks.filter((b) => b.ord + 1 >= from && b.ord + 1 <= to);
+  }
+  if (!blocks.length) throw new Error('Geen blokken in de gekozen agendapunten (selectie leeg of segmenten niet gevonden).');
+  const ins = db.prepare(`INSERT INTO run_blocks (run_id, block_id, ord, t_start, t_end, speaker_raw, text_raw, text_norm, text_clean, text_final, segment_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  db.transaction(() => blocks.forEach((b, i) => ins.run(run.id, b.block_id, i, b.t_start, b.t_end, b.speaker_raw, b.text, b.text, b.text, b.text, b.segment_id)))();
+  const words = blocks.reduce((n, b) => n + wordCount(b.text), 0);
+  log({ runId: run.id, level: 'info', step: 'intake', message: `voorbereide vergadering: ${chosen.length} van ${segs.length} segmenten, ${blocks.length} blokken, ${words} woorden`, data: {
+    segmenten: chosen.map((s) => {
+      const pts = ctx.segmentPoints.get(s.id) || [];
+      return pts.length ? pts.map((p) => `${p.nummer}: ${String(p.titel).slice(0, 70)}`).join(' + ') : (s.label || 'overig');
+    }),
+    tijdcodes: blocks.some((b) => b.t_start != null),
+  } });
 }
 
 async function llmIntake(ctx, pages) {
@@ -203,6 +234,24 @@ async function llmIntake(ctx, pages) {
 
 // ---------------- Normalizer + cleaner ----------------
 const stepDone = (runId, step, chunk) => !!db.prepare("SELECT 1 FROM run_steps WHERE run_id = ? AND step = ? AND chunk = ? AND status IN ('ok','fallback')").get(runId, step, chunk);
+/** Delen per segment (agendapunt): een deel loopt nooit over een agendapunt heen. Elk deel krijgt .segment_id. */
+function segmentChunks(blocks, size, field) {
+  const out = [];
+  let group = [];
+  const flush = () => {
+    if (!group.length) return;
+    for (const c of chunkBlocks(group, size, field)) { c.segment_id = group[0].segment_id ?? null; out.push(c); }
+    group = [];
+  };
+  for (const b of blocks) {
+    if (group.length && b.segment_id !== group[0].segment_id) flush();
+    group.push(b);
+  }
+  flush();
+  return out;
+}
+const chunkPoints = (ctx, chunk) => (ctx.segmented && chunk.segment_id != null ? ctx.segmentPoints.get(chunk.segment_id) || [] : null);
+
 const loadBlocks = (runId, all = false) => db.prepare(`SELECT * FROM run_blocks WHERE run_id = ? ${all ? '' : 'AND merged_into IS NULL'} ORDER BY ord`).all(runId);
 const spk = (b) => b.speaker_raw || '?';
 
@@ -262,7 +311,7 @@ export function validateCleaner(input) {
 async function normalizeAndClean(ctx) {
   const { run, options } = ctx;
   const blocks = loadBlocks(run.id, true); // alle blokken, zodat de delen bij hervatten gelijk blijven
-  const chunks = chunkBlocks(blocks, options.chunkWords, 'text_raw');
+  const chunks = segmentChunks(blocks, options.chunkWords, 'text_raw');
   const total = chunks.length;
   let done = 0;
   await pool(chunks, options.concurrency, async (chunk, ci) => {
@@ -274,6 +323,7 @@ async function normalizeAndClean(ctx) {
     const norm = await callStep(ctx, 'normalizer', ci, {
       user: serializeBlocks(normIn),
       logInput: normIn,
+      points: chunkPoints(ctx, chunk),
       validate: validateNormalizer(chunk),
     });
     if (norm) {
@@ -287,6 +337,7 @@ async function normalizeAndClean(ctx) {
     const clean = await callStep(ctx, 'cleaner', ci, {
       user: serializeBlocks(cleanIn),
       logInput: cleanIn,
+      points: chunkPoints(ctx, chunk),
       validate: validateCleaner(chunk),
     });
     if (clean) applyClean(run.id, chunk, clean);
@@ -326,7 +377,7 @@ function harvestNormalizerNotes(ctx, notes) {
 async function resolve(ctx) {
   const { run, options } = ctx;
   const blocks = loadBlocks(run.id);
-  const chunks = chunkBlocks(blocks, options.chunkWords, 'text_clean');
+  const chunks = segmentChunks(blocks, options.chunkWords, 'text_clean');
   let table = '';
   const upd = db.prepare('UPDATE run_blocks SET speaker_name = ?, fractie = ?, functie = ?, zekerheid = ? WHERE run_id = ? AND block_id = ?');
   for (let ci = 0; ci < chunks.length; ci++) {
@@ -338,6 +389,7 @@ async function resolve(ctx) {
     const res = await callStep(ctx, 'resolver', ci, {
       user: table ? `## SPREKERTABEL (vorig deel)\n${table}\n\n${body}` : body,
       logInput: resIn,
+      points: chunkPoints(ctx, chunk),
       refText: body,
       validate: (out) => {
         const { blocks: heads, sections } = parseBlocks(out);
@@ -366,7 +418,53 @@ async function resolve(ctx) {
 // ---------------- Writer ----------------
 const header = (b) => [b.speaker_name || 'Onbekende spreker', b.fractie || '-', b.functie || '-', `zekerheid: ${b.zekerheid || 'laag'}`].join(' | ');
 
+/** Voorbereide vergadering: punten = segmenten; per punt een samenvatting (MODUS: PUNT). */
+async function writeSegmented(ctx) {
+  const { run, meeting, options } = ctx;
+  const blocks = loadBlocks(run.id);
+  const order = [...new Set(blocks.map((b) => b.segment_id))];
+  const segRows = new Map(db.prepare('SELECT * FROM meeting_segments WHERE meeting_id = ?').all(meeting.id).map((s) => [s.id, s]));
+  const points = [];
+  const pointOf = new Map();
+  for (const [i, sid] of order.entries()) {
+    checkStop(ctx);
+    const pts = ctx.segmentPoints.get(sid) || [];
+    const segBlocks = blocks.filter((b) => b.segment_id === sid);
+    segBlocks.forEach((b) => pointOf.set(b.block_id, i));
+    const point = {
+      type: pts[0]?.type || 'overig',
+      nummer: pts.map((p) => p.nummer).filter(Boolean).join(' + '),
+      codes: pts.map((p) => p.code).filter(Boolean),
+      titel: pts.length ? pts.map((p) => p.titel).join(' / ') : (segRows.get(sid)?.label || 'Overig'),
+      indieners: [...new Set(pts.flatMap((p) => json(p.indieners, []) || []))],
+      bevoegd: [...new Set(pts.map((p) => p.bevoegd).filter(Boolean))].join(', '),
+      samenvatting: '', beslissingen: [], segment_id: sid,
+      t_start: segBlocks[0]?.t_start ?? null, t_end: segBlocks[segBlocks.length - 1]?.t_end ?? null,
+    };
+    if (options.writer && pts.length) {
+      setProgress(run.id, `Samenvatting per punt: ${i + 1}/${order.length}`);
+      const res = await callStep(ctx, 'writer', i, {
+        user: `MODUS: PUNT\n\n${serializeBlocks(segBlocks.map((b) => ({ id: b.block_id, speaker: header(b), text: b.text_clean })))}`,
+        isJson: true,
+        points: pts,
+        validate: (out) => {
+          const j = parseJsonLoose(out);
+          if (typeof j.samenvatting !== 'string') throw new Error('veld "samenvatting" ontbreekt');
+          return { value: j };
+        },
+      });
+      if (res) {
+        point.samenvatting = res.samenvatting || '';
+        point.beslissingen = Array.isArray(res.beslissingen) ? res.beslissingen : [];
+      }
+    }
+    points.push(point);
+  }
+  await finishReport(ctx, blocks, points, pointOf);
+}
+
 async function write(ctx) {
+  if (ctx.segmented) return writeSegmented(ctx);
   const { run, meeting, options } = ctx;
   const blocks = loadBlocks(run.id);
   const points = [];
@@ -415,6 +513,12 @@ async function write(ctx) {
     }
   }
 
+  await finishReport(ctx, blocks, points, pointOf);
+}
+
+/** Gedeelde afwerking: punten toekennen aan blokken, slotsamenvatting, waarschuwingen, rapport. */
+async function finishReport(ctx, blocks, points, pointOf) {
+  const { run, meeting, options } = ctx;
   const upd = db.prepare('UPDATE run_blocks SET point_idx = ? WHERE run_id = ? AND block_id = ?');
   db.transaction(() => blocks.forEach((b) => upd.run(pointOf.get(b.block_id) ?? 0, run.id, b.block_id)))();
 
@@ -456,6 +560,23 @@ export function defaultTitle(m) {
 }
 
 // ---------------- Run ----------------
+/**
+ * Is de vergadering voorbereid (blokken + segmenten per agendapunt)? Dan werkt de run per agendapunt.
+ * ctx.segmentPoints: segment_id → agendapunten (rijen uit meeting_points).
+ */
+function loadSegmentContext(ctx) {
+  const m = ctx.meeting;
+  const hasBlocks = db.prepare('SELECT COUNT(*) n FROM meeting_blocks WHERE meeting_id = ?').get(m.id).n > 0;
+  ctx.segmented = m.prep_status === 'klaar' && hasBlocks;
+  ctx.segmentPoints = new Map();
+  if (!ctx.segmented) return;
+  const points = new Map(db.prepare('SELECT * FROM meeting_points WHERE meeting_id = ?').all(m.id).map((p) => [p.id, p]));
+  for (const s of db.prepare('SELECT id, point_ids, point_id FROM meeting_segments WHERE meeting_id = ?').all(m.id)) {
+    const ids = json(s.point_ids, s.point_id ? [s.point_id] : []) || [];
+    ctx.segmentPoints.set(s.id, ids.map((id) => points.get(id)).filter(Boolean));
+  }
+}
+
 export const STOP_STEPS = ['normalizer', 'cleaner', 'resolver', 'writer'];
 
 export async function runPipeline(runId) {
@@ -477,6 +598,9 @@ export async function runPipeline(runId) {
     blockTo: Number(opt.blockTo) || null,
     skipCleaner: stopAfter === 'normalizer',
     stopAfter,
+    // voorbereide vergadering: welke segmenten (agendapunten) deze run verwerkt
+    segmentIds: Array.isArray(opt.segmentIds) ? opt.segmentIds.map(Number) : null,
+    includeOverig: !!opt.includeOverig,
   };
   const models = {};
   for (const step of ['intake', 'normalizer', 'cleaner', 'resolver', 'writer']) models[step] = opt.models?.[step] || defaultModel(step);
@@ -484,9 +608,11 @@ export async function runPipeline(runId) {
   db.prepare("UPDATE runs SET status = 'bezig', error = NULL, started_at = COALESCE(started_at, datetime('now')), options = ?, skill_versions = COALESCE(skill_versions, ?) WHERE id = ?")
     .run(JSON.stringify({ ...opt, ...options, models }), JSON.stringify(versions), runId);
   const ctx = { run, meeting, options, models, signal: controller.signal };
+  loadSegmentContext(ctx);
   log({ runId, level: 'info', message: `start run ${runId}: ${meeting.input_name} (${meeting.input_type})${stopAfter !== 'writer' ? `, stopt na ${stopAfter}` : ''}`, data: {
     vergadering: { orgaan: meeting.orgaan, commissie: meeting.commissie, datum: meeting.datum, voorzitter: meeting.voorzitter, agenda: meeting.agenda_name ? `${meeting.agenda_name} (${meeting.agenda_status})` : null },
     opties: options, modellen: models, skillversies: versions,
+    per_agendapunt: ctx.segmented, segmenten: ctx.segmented ? ctx.segmentPoints.size : undefined,
   } });
   const phase = async (name, fn) => {
     const ts = Date.now();
@@ -496,7 +622,7 @@ export async function runPipeline(runId) {
   };
   try {
     // Agenda eerst uitlezen als dat nog niet gebeurd is
-    if (meeting.agenda_text && !['klaar', 'bezig'].includes(meeting.agenda_status)) {
+    if (!ctx.segmented && meeting.agenda_text && !['klaar', 'bezig'].includes(meeting.agenda_status)) {
       await phase('agenda', async () => {
         setProgress(runId, 'Agenda uitlezen');
         try {

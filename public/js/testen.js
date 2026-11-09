@@ -6,6 +6,7 @@ let skills = [];
 let skill = null; // opgeslagen versie van de gekozen skill
 let data = null; // blokken + delen van de gekozen vergadering
 let history;
+let segmentId = null; // agendapunt van de geladen blokken (voorbereide vergadering)
 const results = new Map(); // id → resultaat (voor "gebruik als invoer")
 
 const $id = (id) => document.getElementById(id);
@@ -32,7 +33,7 @@ async function loadMeeting() {
   $id('t-meeting-info').textContent = 'Intake uitvoeren…';
   try {
     data = await App.api(`/meetings/${id}/blocks`);
-    $id('t-chunk').innerHTML = data.chunks.map((c) => `<option value="${c.index}">Deel ${c.index + 1} · ${c.first}–${c.last} · ${c.words} woorden</option>`).join('');
+    $id('t-chunk').innerHTML = data.chunks.map((c) => `<option value="${c.index}">${c.label ? `${App.esc(c.label)} · ` : `Deel ${c.index + 1} · `}${c.first}–${c.last} · ${c.words} woorden</option>`).join('');
     const total = data.blocks.reduce((n, b) => n + b.words, 0);
     $id('t-meeting-info').textContent = `${data.blocks.length} blokken, ${total} woorden, ${data.chunks.length} delen van ±${data.chunkWords} woorden${data.meeting.has_agenda_text ? ' · agenda beschikbaar' : ''}`;
     $id('t-load-agenda').disabled = !data.meeting.has_agenda_text;
@@ -51,7 +52,12 @@ function loadBlocks() {
   if (!data) return;
   const from = Math.max(1, Number($id('t-from').value) || 1);
   const to = Math.min(data.blocks.length, Number($id('t-to').value) || data.blocks.length);
-  $id('t-input').value = serialize(data.blocks.slice(from - 1, to).map((b) => ({ id: b.id, speaker: b.speaker, text: b.text })));
+  const list = data.blocks.slice(from - 1, to);
+  $id('t-input').value = serialize(list.map((b) => ({ id: b.id, speaker: b.speaker, text: b.text })));
+  // Allemaal uit hetzelfde agendapunt? Dan gaat de fiche van dat punt mee als context.
+  const segs = [...new Set(list.map((b) => b.segment_id).filter(Boolean))];
+  segmentId = segs.length === 1 ? segs[0] : null;
+  $id('t-meeting-info').dataset.segment = segmentId || '';
   inputStats();
 }
 
@@ -207,7 +213,7 @@ async function run() {
   try {
     const res = await App.api('/test/run', {
       method: 'POST',
-      body: { step, input, models, skillContent: $id('t-skill').value, refs: currentRefs(), meetingId: $id('t-meeting').value || null, label: $id('t-label').value },
+      body: { step, input, models, skillContent: $id('t-skill').value, refs: currentRefs(), meetingId: $id('t-meeting').value || null, label: $id('t-label').value, segmentId },
     });
     res.forEach((r) => { r.step = step; });
     showResults(res);

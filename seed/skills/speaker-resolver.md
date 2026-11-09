@@ -5,7 +5,7 @@ description: >
   aan echte namen, zonder sprekerslijst, agenda of tijdcodes, enkel op basis van
   aanspreekvormen, procedurele taal, bevoegdheden en de meegegeven ledenlijst.
   Vierde stap, na transcript-cleaner. Verzint nooit een naam.
-refs: [leden, bevoegdheden, vergadering, agenda]
+refs: [leden, bevoegdheden, vergadering, agenda, agendapunt]
 ---
 
 # Skill: speaker-resolver
@@ -26,6 +26,11 @@ Optioneel, als ze meegegeven zijn:
   interpellatie bij een agendapunt wordt meestal gesteld door de indiener en
   beantwoord door de bevoegde schepen die bij dat punt vermeld staat. Dat is een
   aanwijzing van niveau **middel**; met een directe aanspreking wordt het **hoog**.
+
+- **AGENDAPUNT**: het agendapunt waar dit stuk over gaat (indiener en bevoegde
+  schepen). Bij een mondelinge vraag spreken in de regel: de voorzitter (aankondiging),
+  de indiener (vraag), de bevoegde schepen (antwoord), opnieuw de indiener (repliek),
+  eventueel de schepen. Dat is een aanwijzing van niveau **middel**.
 
 Een naam mag alleen uit deze lijsten komen of letterlijk in de tekst staan.
 

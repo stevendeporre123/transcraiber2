@@ -1,0 +1,44 @@
+{
+  "name": "director-aanwezigheden",
+  "version": "1.0.0",
+  "description": "Electron-app om aanwezigheden van vergaderingen bij te werken via de Director REST API.",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test \"test/*.test.js\"",
+    "mock": "node test/mock-server.js",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win portable"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.9",
+    "bootstrap-icons": "^1.13.2",
+    "datatables.net-bs5": "^3.1.5",
+    "jquery": "^4.0.0"
+  },
+  "devDependencies": {
+    "electron": "45.3.1",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "be.gent.director.aanwezigheden",
+    "productName": "Director Aanwezigheden",
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**",
+      "renderer/**",
+      "node_modules/**"
+    ],
+    "win": {
+      "target": "portable"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "mac": {
+      "target": "dmg"
+    }
+  }
+}

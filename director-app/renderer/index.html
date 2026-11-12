@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'none'">
+  <title>Director Aanwezigheden</title>
+  <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../node_modules/bootstrap-icons/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="../node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand bg-body-tertiary border-bottom px-3">
+    <span class="navbar-brand d-flex align-items-center gap-2">
+      <i class="bi bi-people-fill text-primary"></i> Director Aanwezigheden
+    </span>
+    <span id="envBadge" class="badge text-bg-secondary ms-1"></span>
+    <div class="ms-auto d-flex gap-2">
+      <button id="btnRefresh" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-clockwise"></i> Vernieuwen</button>
+      <button id="btnTheme" class="btn btn-outline-secondary btn-sm" title="Licht/donker"><i class="bi bi-moon-stars"></i></button>
+      <button id="btnSettings" class="btn btn-primary btn-sm"><i class="bi bi-gear"></i> Instellingen</button>
+    </div>
+  </nav>
+
+  <main class="container-fluid py-3">
+    <div id="setupHint" class="alert alert-info d-none">
+      <i class="bi bi-info-circle"></i>
+      Nog niet geconfigureerd. Open <a href="#" id="linkSettings">Instellingen</a> en vul minstens het client-secret en een orgaan-ID in.
+    </div>
+
+    <div class="row g-3">
+      <!-- Vergaderingen -->
+      <div class="col-xl-5">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header d-flex align-items-center gap-2">
+            <i class="bi bi-calendar3"></i><strong>Vergaderingen</strong>
+            <div class="ms-auto d-flex gap-2">
+              <select id="filterOrgan" class="form-select form-select-sm" title="Orgaan"></select>
+              <select id="filterStatus" class="form-select form-select-sm" title="Status"></select>
+            </div>
+          </div>
+          <div class="card-body">
+            <table id="tblMeetings" class="table table-sm table-hover align-middle w-100"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leden / aanwezigheden -->
+      <div class="col-xl-7">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <i class="bi bi-person-check"></i>
+              <strong id="meetingTitle">Kies een vergadering</strong>
+              <span id="meetingSub" class="text-body-secondary small"></span>
+              <button id="btnMeetingRaw" class="btn btn-link btn-sm ms-auto d-none" title="Ruwe data van de vergadering"><i class="bi bi-braces"></i></button>
+            </div>
+            <div id="counters" class="d-flex gap-2 flex-wrap mt-2"></div>
+          </div>
+          <div class="card-body">
+            <div id="bulkBar" class="d-none mb-2 d-flex align-items-center gap-2 flex-wrap">
+              <span class="small text-body-secondary"><span id="selCount">0</span> geselecteerd →</span>
+              <div id="bulkButtons" class="btn-group btn-group-sm"></div>
+            </div>
+            <div id="membersEmpty" class="text-center text-body-secondary py-5">
+              <i class="bi bi-arrow-left-circle fs-1 d-block mb-2"></i>
+              Klik links op een vergadering om de leden en hun aanwezigheid te zien.
+            </div>
+            <div id="membersWrap" class="d-none">
+              <table id="tblMembers" class="table table-sm table-hover align-middle w-100"></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Instellingen -->
+  <div class="modal fade" id="modalSettings" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <form class="modal-content" id="formSettings" novalidate>
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-gear"></i> Instellingen</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabConn" type="button">Verbinding</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabOrgans" type="button">Organen</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabMeetings" type="button">Vergaderingen</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAttendance" type="button">Aanwezigheid</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAdvanced" type="button">Geavanceerd</button></li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane fade show active" id="tabConn">
+              <div class="mb-3">
+                <label class="form-label" for="sBaseUrl">Base-URL</label>
+                <input class="form-control" id="sBaseUrl" name="baseUrl" required placeholder="https://suite-release.onlinesmartcities.be">
+                <div class="form-text">Zonder <code>/api/v1/...</code>. <code>https://</code> wordt aangevuld als het ontbreekt.</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="sTokenUrl">Token-URL (OAuth2)</label>
+                <input class="form-control" id="sTokenUrl" name="tokenUrl" required>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="sClientId">Client-ID</label>
+                  <input class="form-control" id="sClientId" name="clientId" required autocomplete="off">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="sClientSecret">Client-secret</label>
+                  <div class="input-group">
+                    <input class="form-control" id="sClientSecret" name="clientSecret" type="password" required autocomplete="off">
+                    <button class="btn btn-outline-secondary" type="button" id="btnShowSecret" title="Tonen"><i class="bi bi-eye"></i></button>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="sScope">Scope <span class="text-body-secondary">(optioneel)</span></label>
+                  <input class="form-control" id="sScope" name="scope">
+                </div>
+              </div>
+              <div class="mt-3 d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-outline-primary btn-sm" id="btnTestAuth"><i class="bi bi-plug"></i> Verbinding testen</button>
+                <span id="testResult" class="small"></span>
+              </div>
+              <div class="form-text mt-2">Het secret wordt versleuteld bewaard met de sleutelbos van het besturingssysteem (indien beschikbaar).</div>
+            </div>
+
+            <div class="tab-pane fade" id="tabOrgans">
+              <div class="mb-3">
+                <label class="form-label" for="sOrganIds">Orgaan-ID('s)</label>
+                <textarea class="form-control font-monospace" id="sOrganIds" name="organIds" rows="2" placeholder="12.0623.8213.4871, 15.0623.8213.2303"></textarea>
+                <div class="form-text">Komma-gescheiden. Of haal de lijst op en vink aan.</div>
+              </div>
+              <button type="button" class="btn btn-outline-primary btn-sm mb-2" id="btnLoadOrgans"><i class="bi bi-cloud-download"></i> Organen ophalen</button>
+              <div id="organsWrap" class="d-none">
+                <table id="tblOrgans" class="table table-sm table-hover align-middle w-100"></table>
+              </div>
+            </div>
+
+            <div class="tab-pane fade" id="tabMeetings">
+              <div class="mb-3">
+                <label class="form-label" for="sMeetingStatuses">Vergaderstatussen</label>
+                <input class="form-control font-monospace" id="sMeetingStatuses" name="meetingStatuses">
+                <div class="form-text">Komma-gescheiden, bv. <code>AGENDA_OPEN,AGENDA_CLOSED,AGENDA_PUBLISHED_INTERNAL</code>. Leeg = alle statussen (dan is een orgaan verplicht).</div>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="sSort">Sortering</label>
+                  <select class="form-select" id="sSort" name="sort">
+                    <option value="-meetingDate">Nieuwste eerst (-meetingDate)</option>
+                    <option value="+meetingDate">Oudste eerst (+meetingDate)</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="sListStyle">Lijsten in query</label>
+                  <select class="form-select" id="sListStyle" name="listStyle">
+                    <option value="comma">Komma-gescheiden (organ=a,b)</option>
+                    <option value="repeat">Herhaald (organ=a&amp;organ=b)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-pane fade" id="tabAttendance">
+              <div class="mb-3">
+                <label class="form-label" for="sAttendanceStatuses">Aanwezigheidsstatussen</label>
+                <input class="form-control font-monospace" id="sAttendanceStatuses" name="attendanceStatuses">
+                <div class="form-text">Formaat <code>CODE=Label</code>, komma-gescheiden. De code gaat naar de API (<code>PRESENT</code> staat in de collectie; controleer de andere codes bij Green Valley).</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="sStatusField">Veldnaam in PATCH-body</label>
+                <input class="form-control font-monospace" id="sStatusField" name="statusField">
+                <div class="form-text">Body wordt <code>{"&lt;veld&gt;": "PRESENT"}</code>. Standaard <code>status</code>.</div>
+              </div>
+            </div>
+
+            <div class="tab-pane fade" id="tabAdvanced">
+              <label class="form-label" for="sExtraHeaders">Extra HTTP-headers</label>
+              <textarea class="form-control font-monospace" id="sExtraHeaders" name="extraHeaders" rows="4" placeholder='{"X-Tenant": "gent"}  of  X-Tenant: gent'></textarea>
+              <div class="form-text">JSON-object of één <code>Naam: waarde</code> per regel. Wordt aan elke API-call toegevoegd.</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuleren</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Opslaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Lid bewerken -->
+  <div class="modal fade" id="modalMember" tabindex="-1">
+    <div class="modal-dialog">
+      <form class="modal-content" id="formMember">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person"></i> <span id="mmName"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <dl class="row small mb-3">
+            <dt class="col-4">Lid-ID</dt><dd class="col-8 font-monospace" id="mmId"></dd>
+            <dt class="col-4">Rol</dt><dd class="col-8" id="mmRole"></dd>
+            <dt class="col-4">Huidige status</dt><dd class="col-8" id="mmStatus"></dd>
+          </dl>
+          <label class="form-label" for="mmNewStatus">Nieuwe aanwezigheidsstatus</label>
+          <select class="form-select" id="mmNewStatus" required></select>
+          <details class="mt-3">
+            <summary class="small text-body-secondary">Ruwe data</summary>
+            <pre class="json small mt-2" id="mmRaw"></pre>
+          </details>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuleren</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Opslaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Ruwe JSON / foutdetails -->
+  <div class="modal fade" id="modalRaw" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="rawTitle">Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body"><pre class="json small mb-0" id="rawBody"></pre></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btnCopyRaw"><i class="bi bi-clipboard"></i> Kopiëren</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toasts"></div>
+
+  <script src="../node_modules/jquery/dist/jquery.min.js"></script>
+  <script src="../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../node_modules/datatables.net/js/dataTables.min.js"></script>
+  <script src="../node_modules/datatables.net-bs5/js/dataTables.bootstrap5.min.js"></script>
+  <script src="normalize.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

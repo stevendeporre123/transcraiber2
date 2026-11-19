@@ -395,3 +395,70 @@ export function backfillQuality() {
   }
   return ids.length;
 }
+
+// ---------- Volledige run (pagina Nieuwe test) ----------
+const RUN_AUTO_WEIGHTS = { structuur: 0.2, trouw: 0.2, namen: 0.4, sprekers: 0.2 };
+
+/** Tekst van een run: ruwe invoer, eindtekst per blok en het verslag (als JSON-tekst). */
+export function runTexts(runId) {
+  const all = db.prepare('SELECT block_id, speaker_name, zekerheid, text_raw, text_clean, text_final, merged_into FROM run_blocks WHERE run_id = ? ORDER BY ord').all(runId);
+  const finals = all.filter((b) => !b.merged_into);
+  return {
+    blocks: finals,
+    raw: all.map((b) => b.text_raw || '').join('\n'),
+    final: finals.map((b) => b.text_final ?? b.text_clean ?? b.text_raw ?? '').join('\n'),
+    report: db.prepare('SELECT report FROM runs WHERE id = ?').get(runId)?.report || '',
+  };
+}
+
+/**
+ * Score (0-100) van een volledige run: automatisch (structuur, trouw, namen, sprekers) en,
+ * als er een referentie is, de gelijkenis met dat gewenste eindresultaat.
+ * Referentie van soort 'verslag' → vergeleken met het verslag; anders met de letterlijke eindtekst.
+ */
+export function scoreRun(runId, { goldId } = {}) {
+  const run = db.prepare('SELECT * FROM runs WHERE id = ?').get(runId);
+  if (!run || run.status !== 'klaar') return null;
+  const t = runTexts(runId);
+  if (!t.blocks.length) return null;
+  const parts = [];
+  const add = (key, label, score, detail, extra = {}) => parts.push({ key, label, score: round(score), weight: RUN_AUTO_WEIGHTS[key], detail, ...extra });
+
+  const st = db.prepare("SELECT COUNT(*) n, SUM(status = 'fallback') fb FROM run_steps WHERE run_id = ?").get(runId);
+  const fb = st.fb || 0;
+  add('structuur', 'Structuur', st.n ? 100 * (1 - fb / st.n) : 100, `${st.n} modelaanroepen, ${fb} teruggevallen op de ongewijzigde invoer`);
+
+  const wIn = wordCount(t.raw);
+  const wOut = wordCount(t.final);
+  const ratio = wOut / Math.max(1, wIn);
+  add('trouw', 'Trouw aan de bron', bandScore(ratio, [0.7, 1.05]), `woorden ${wIn} → ${wOut} (${Math.round(ratio * 100)}%, verwacht 70%–105%)`);
+
+  const names = namesFromLists('normalizer', t.raw, t.final);
+  const c = names.counts;
+  add('namen', 'Namen en termen', names.score,
+    names.score == null ? 'geen gekende namen of vervormingen in de tekst' : `${c.verbeterd} verbeterd, ${c.gemist} gemist, ${c.verdwenen} verdwenen, ${c.toegevoegd} toegevoegd`,
+    { voorbeelden: names.voorbeelden });
+
+  const named = t.blocks.filter((b) => b.speaker_name);
+  if (named.length) {
+    const known = new Set(db.prepare('SELECT lower(naam) n FROM members').all().map((r) => r.n));
+    const pts = named.map((b) => (known.has(String(b.speaker_name).toLowerCase()) ? 100 : /onbekend/i.test(b.speaker_name) ? 50 : 0));
+    add('sprekers', 'Sprekers', pts.reduce((n, x) => n + x, 0) / pts.length, `${pts.filter((x) => x === 100).length}/${named.length} blokken met een spreker uit de ledenlijst`);
+  }
+  const auto = { score: round(weighted(parts.map((p) => [p.score, p.weight]))), parts };
+
+  const gid = goldId !== undefined ? goldId : run.gold_id;
+  const gold = goldFor(gid);
+  let g = null;
+  if (gold) {
+    const verslag = gold.soort === 'verslag';
+    if (verslag && !t.report) g = { score: null, method: 'deze run maakte geen verslag', parts: [] };
+    else g = goldScore({ step: verslag ? 'writer' : 'cleaner', inputText: t.raw, inputBlocks: [], output: verslag ? t.report : t.final, goldText: gold.text });
+    if (g) delete g.excerpt;
+  }
+  const detail = { auto, gold: g ? { ...g, id: gold.id, naam: gold.naam, soort: gold.soort } : null };
+  const quality = combine({ auto: auto.score, gold: g?.score });
+  db.prepare('UPDATE runs SET quality = ?, quality_auto = ?, quality_gold = ?, quality_detail = ?, gold_id = ? WHERE id = ?')
+    .run(quality, auto.score, g?.score ?? null, JSON.stringify(detail), gold ? gold.id : null, runId);
+  return { quality, quality_auto: auto.score, quality_gold: g?.score ?? null, detail };
+}

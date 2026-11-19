@@ -309,6 +309,12 @@ addColumn('test_runs', 'ms_net', 'INTEGER');
 addColumn('test_runs', 'http_retries', 'INTEGER');
 addColumn('test_runs', 'batch_id', 'INTEGER');
 addColumn('runs', 'batch_id', 'INTEGER');
+// Kwaliteitsscore van een volledige run (pagina Nieuwe test): automatisch + referentie
+addColumn('runs', 'quality', 'REAL');
+addColumn('runs', 'quality_auto', 'REAL');
+addColumn('runs', 'quality_gold', 'REAL');
+addColumn('runs', 'quality_detail', 'TEXT');
+addColumn('runs', 'gold_id', 'INTEGER');
 
 export function getSetting(key, fallback = null) {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);

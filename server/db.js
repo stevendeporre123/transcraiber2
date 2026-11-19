@@ -254,6 +254,18 @@ CREATE TABLE IF NOT EXISTS model_batches (
   finished_at TEXT
 );
 
+-- Geverifieerde eindresultaten (gold reference) om testuitvoer mee te vergelijken
+CREATE TABLE IF NOT EXISTS gold_refs (
+  id INTEGER PRIMARY KEY,
+  meeting_id INTEGER REFERENCES meetings(id) ON DELETE CASCADE,
+  naam TEXT NOT NULL,
+  soort TEXT NOT NULL DEFAULT 'transcript',  -- transcript (opgeschoond, per spreker) of verslag
+  bron TEXT,                   -- bestandsnaam of 'geplakt'
+  text TEXT NOT NULL,
+  notitie TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_terms_cat ON terms(categorie);
 CREATE INDEX IF NOT EXISTS idx_points_meeting ON meeting_points(meeting_id, ord);
 CREATE INDEX IF NOT EXISTS idx_segments_meeting ON meeting_segments(meeting_id, start_ord);
@@ -277,14 +289,26 @@ addColumn('meetings', 'prep_progress', 'TEXT');
 addColumn('meetings', 'agenda_format', 'TEXT');
 addColumn('skills', 'seed_content', 'TEXT');
 addColumn('members', 'varianten', 'TEXT'); // STT-vervormingen van de naam, komma-gescheiden
-addColumn('streets', 'varianten', 'TEXT');
+addColumn('meetings', 'subtitle_file', 'TEXT'); // apart opgeladen originele SRT/VTT (voor de verbeterde ondertitels)
+addColumn('meetings', 'subtitle_name', 'TEXT');
+addColumn('meetings', 'subtitle_type', 'TEXT');
+addColumn('streets', 'varianten', 'TEXT'); // STT-vervormingen van de straatnaam
+// Kwaliteitsscore per test (Testbank): eindscore 0-100 + deelscores en details (JSON)
+addColumn('test_runs', 'quality', 'REAL');
+addColumn('test_runs', 'quality_auto', 'REAL');
+addColumn('test_runs', 'quality_gold', 'REAL');
+addColumn('test_runs', 'quality_judge', 'REAL');
+addColumn('test_runs', 'quality_detail', 'TEXT');
+addColumn('test_runs', 'gold_id', 'INTEGER');
+addColumn('test_runs', 'judge_model', 'TEXT');
+addColumn('test_runs', 'judge_cost', 'REAL');
 // Modelvergelijking: netto duur (enkel de aanvaarde aanroep, zonder herpogingen) en aantal herpogingen
 addColumn('run_steps', 'ms_net', 'INTEGER');
 addColumn('run_steps', 'http_retries', 'INTEGER');
 addColumn('test_runs', 'ms_net', 'INTEGER');
 addColumn('test_runs', 'http_retries', 'INTEGER');
 addColumn('test_runs', 'batch_id', 'INTEGER');
-addColumn('runs', 'batch_id', 'INTEGER'); // STT-vervormingen van de straatnaam // meegeleverde tekst (om updates te kunnen uitrollen)
+addColumn('runs', 'batch_id', 'INTEGER');
 
 export function getSetting(key, fallback = null) {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);

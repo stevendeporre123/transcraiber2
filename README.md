@@ -104,13 +104,27 @@ export: de code plakt de letterlijke, opgeschoonde tekst per punt ─► PDF, DO
 |---|---|
 | Transcripties | opladen (transcript, agenda, orgaan, commissie, datum, voorzitter), modellen per stap kiezen, runs volgen, opnieuw verwerken met een ander model, twee runs vergelijken |
 | Resultaat | verslag lezen en per blok aanpassen (tekst, spreker, punt), exporteren, agenda, stappen met tokens en kosten, input en output van elke modelaanroep |
-| Testbank | één skill testen op een klein stuk input (een deel of blokbereik uit een vergadering, of eigen tekst), met tot 3 modellen naast elkaar en een concept-skilltekst die je test vóór je ze opslaat. Per blok zie je wat het model veranderde, of de pipeline de uitvoer zou aanvaarden, en de volledige prompt. De uitvoer geef je met één klik door aan de volgende skill |
+| Testbank | één skill testen op een klein stuk input (een deel of blokbereik uit een vergadering, of eigen tekst), met tot 3 modellen naast elkaar en een concept-skilltekst die je test vóór je ze opslaat. Per blok zie je wat het model veranderde, of de pipeline de uitvoer zou aanvaarden, en de volledige prompt. De uitvoer geef je met één klik door aan de volgende skill. Elke test krijgt een **kwaliteitsscore** (zie hieronder) |
 | Modelvergelijking | dezelfde invoer met meerdere OpenRouter-modellen (tot 12). **Eén stap**: in de Testbank op *Vergelijk modellen* (zelfde invoer, skilltekst en referenties). **Pipeline**: een run per model op een vergadering, eventueel beperkt tot een blokbereik of tot een stap. Per model: tokens in/uit, kost, **netto duur** (enkel de aanvaarde aanroep, zonder herpogingen en wachttijd) naast de totale duur, herpogingen en kwaliteitssignalen (validatie, gewijzigde blokken, teruggevallen delen). Kies een referentie en open per model de verschillen per blok |
 | Skills | skills bewerken met versiebeheer en diff, referenties per skill aanvinken, **skill-assistent** (promptvenster in gewone taal), correcties uit de output |
 | Raadsleden | CRUD voor leden, schepenen (bevoegdheden en trefwoorden) en commissies (met voorzitter) |
 | Gentse context | CRUD voor terminologie, STT-vervormingen, actuele projecten en richtlijnen; voorstellen goedkeuren |
 | Straten | de officiële stratenlijst (2961 straten) |
 | Instellingen | API-key, standaardmodel per stap, temperatuur, grootte van de delen, parallelle aanroepen |
+
+## Kwaliteitsscore (Testbank)
+
+Elke test krijgt een score van 0 tot 100, opgebouwd uit drie pijlers. Ontbreekt een pijler,
+dan wordt het gewicht over de andere verdeeld.
+
+| Pijler | Gewicht | Wat |
+|---|---|---|
+| Automatisch (A) | 30% | gratis, altijd berekend. **Structuur** (25%): pipeline-validatie, ontbrekende of extra blokken, afgekapt antwoord. **Trouw aan de bron** (25%): verhouding woorden in/uit binnen de verwachte band per skill (normalizer 95–105%, cleaner 70–100%); bij de resolver de zekerheid. **Namen en termen** (50%): gekende STT-vervormingen uit raadsleden, straten en Gentse context die verbeterd of gemist zijn, correcte namen die verdwenen of erbij kwamen; bij de resolver het aandeel sprekers uit de ledenlijst |
+| Referentie (R) | 40% | vergelijking met een **geverifieerd eindresultaat** (letterlijke, opgeschoonde transcriptie; PDF, DOCX, TXT, SRT, VTT of geplakt), te beheren onderaan de Testbank. De score zoekt zelf het stuk van de referentie dat bij de geteste blokken hoort en meet de woordgelijkenis (60%) en de namen (40%). Staat de referentie in blokformaat (`## B001 \| spreker: …`), dan wordt per blok vergeleken, ook de sprekers |
+| Rechtermodel (J) | 30% | optioneel (vinkje of knop **Beoordeel met rechtermodel**, kost tokens): de skill `kwaliteitsrechter` scoort namen, terminologie, trouw en opschoning van 1 tot 5 en somt de fouten op. Model in te stellen bij Instellingen (Kwaliteitsrechter) of per test |
+
+Een test op een vergadering gebruikt automatisch de meest recente referentie van die
+vergadering. Bestaande tests krijgen bij het opstarten achteraf hun automatische score.
 
 ## Debug-log
 

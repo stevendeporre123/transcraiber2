@@ -5,7 +5,7 @@ import multer from 'multer';
 import { diffWordsWithSpace } from 'diff';
 import { db, json, getSetting, setSetting } from './db.js';
 import { UPLOAD_DIR, STEPS, config } from './config.js';
-import { detectType, hasTimecodes, readAgendaText } from './services/extract.js';
+import { detectType, hasTimecodes, readAgendaText, parseCues } from './services/extract.js';
 import { runPipeline, processAgenda, isActive, stopRun } from './services/pipeline.js';
 import { buildReport, toDocx, toPdf, toVtt } from './services/export.js';
 import { listModels, apiKey, defaultModel } from './services/openrouter.js';
@@ -14,8 +14,10 @@ import { saveSkillVersion, proposeSkillChange, skillDiff } from './services/skil
 import { meetingBlocks, agendaText, runTest, getTest, TEST_STEPS } from './services/testbench.js';
 import { startBatch, stopBatch, listBatches, getBatch, deleteBatch, MAX_MODELS } from './services/batch.js';
 import { parseBlocks, parseSpeakerHeader } from './services/blockfmt.js';
+import { scoreTest, judgeTest, PILLAR_WEIGHTS } from './services/quality.js';
 import { prepareMeeting, stopPrepare, isPreparing, listSegments, loadBlocks as loadMeetingBlocks, setSegmentStart, addSegment, updateSegment, deleteSegment } from './services/prepare.js';
 import { POINT_TYPES } from './services/agenda-parse.js';
+import { buildSubtitles, subtitleSource, subtitleRuns, readSubtitleFile } from './services/subtitles.js';
 import { renderLeden, renderBevoegdheden, renderTerminologie, invalidateStreets, TERM_CATEGORIES, REF_KEYS } from './services/context.js';
 
 export const api = express.Router();
@@ -244,7 +246,7 @@ api.delete('/meetings/:id', (req, res) => {
   if (!m) return notFound(res);
   if ([...db.prepare('SELECT id FROM runs WHERE meeting_id = ?').all(m.id)].some((r) => isActive(r.id)) || isPreparing(m.id)) return res.status(409).json({ error: 'Er loopt nog een verwerking of voorbereiding.' });
   db.prepare('DELETE FROM meetings WHERE id = ?').run(m.id);
-  for (const f of [m.input_file, m.agenda_file]) if (f) fs.rm(f, { force: true }, () => {});
+  for (const f of [m.input_file, m.agenda_file, m.subtitle_file]) if (f) fs.rm(f, { force: true }, () => {});
   res.json({ ok: true });
 });
 
@@ -318,6 +320,58 @@ api.put('/segments/:id', (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 api.delete('/segments/:id', (req, res) => { deleteSegment(Number(req.params.id)); res.json({ ok: true }); });
+
+// ---------------- Verbeterde ondertitels (volledige SRT/VTT met de tekst van alle runs) ----------------
+const subtitleInfo = (m) => {
+  const src = subtitleSource(m);
+  let cues = null;
+  if (src) try { cues = readSubtitleFile(src.file).cues.length; } catch { cues = 0; }
+  return { source: src ? { name: src.name, type: src.type, uploaded: src.uploaded, cues } : null, runs: subtitleRuns(m.id) };
+};
+const subtitleOpts = (q) => ({
+  runIds: q.runs != null ? String(q.runs).split(',').map(Number).filter(Boolean) : undefined,
+  format: ['srt', 'vtt'].includes(q.format) ? q.format : undefined,
+  speakers: q.speakers !== '0',
+});
+api.get('/meetings/:id/subtitles', (req, res) => {
+  const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(req.params.id);
+  if (!m) return notFound(res);
+  res.json(subtitleInfo(m));
+});
+api.post('/meetings/:id/subtitles', upload.single('subtitles'), (req, res) => {
+  const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(req.params.id);
+  const drop = () => req.file && fs.rm(req.file.path, { force: true }, () => {});
+  if (!m) { drop(); return notFound(res); }
+  if (!req.file) return res.status(400).json({ error: 'Geen bestand opgeladen.' });
+  const type = path.extname(req.file.originalname).toLowerCase().slice(1);
+  if (!['srt', 'vtt'].includes(type)) { drop(); return res.status(400).json({ error: 'Enkel .srt of .vtt.' }); }
+  let cues = 0;
+  try { cues = readSubtitleFile(req.file.path).cues.length; } catch { cues = 0; }
+  if (!cues) { drop(); return res.status(400).json({ error: 'Geen ondertitels (cues met tijdcodes) gevonden in dit bestand.' }); }
+  if (m.subtitle_file) fs.rm(m.subtitle_file, { force: true }, () => {});
+  db.prepare('UPDATE meetings SET subtitle_file = ?, subtitle_name = ?, subtitle_type = ? WHERE id = ?').run(req.file.path, req.file.originalname, type, m.id);
+  res.json(subtitleInfo(db.prepare('SELECT * FROM meetings WHERE id = ?').get(m.id)));
+});
+api.delete('/meetings/:id/subtitles', (req, res) => {
+  const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(req.params.id);
+  if (!m) return notFound(res);
+  if (m.subtitle_file) fs.rm(m.subtitle_file, { force: true }, () => {});
+  db.prepare('UPDATE meetings SET subtitle_file = NULL, subtitle_name = NULL, subtitle_type = NULL WHERE id = ?').run(m.id);
+  res.json(subtitleInfo(db.prepare('SELECT * FROM meetings WHERE id = ?').get(m.id)));
+});
+api.get('/meetings/:id/subtitles/preview', (req, res) => {
+  try { res.json(buildSubtitles(Number(req.params.id), subtitleOpts(req.query)).stats); } catch (e) { res.status(400).json({ error: e.message }); }
+});
+api.get('/meetings/:id/subtitles/download', (req, res) => {
+  const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(req.params.id);
+  if (!m) return notFound(res);
+  try {
+    const r = buildSubtitles(m.id, subtitleOpts(req.query));
+    const src = subtitleSource(m);
+    const base = path.basename(src.name, path.extname(src.name)).replace(/[^\p{L}\p{N} _-]+/gu, '').trim().replace(/\s+/g, '_') || `vergadering-${m.id}`;
+    res.type(r.format === 'vtt' ? 'text/vtt' : 'application/x-subrip').attachment(`${base}-verbeterd.${r.format}`).send(r.content);
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
 
 // ---------------- Runs ----------------
 api.get('/runs', (req, res) => {
@@ -546,6 +600,8 @@ api.post('/batches', (req, res) => {
       ...b,
       meetingId: b.meetingId ? Number(b.meetingId) : null,
       segmentId: b.segmentId ? Number(b.segmentId) : null,
+      goldId: b.goldId === 'geen' ? null : b.goldId ? Number(b.goldId) : undefined,
+      judge: !!b.judge,
     });
     res.json({ id, maxModels: MAX_MODELS });
   } catch (e) { res.status(400).json({ error: e.message }); }
@@ -576,13 +632,18 @@ api.get('/meetings/:id/blocks', async (req, res) => {
 api.get('/meetings/:id/agenda-text', (req, res) => res.json({ text: agendaText(Number(req.params.id)) }));
 api.post('/test/run', async (req, res) => {
   try {
-    const { step, input, models, skillContent, refs, meetingId, label, segmentId } = req.body;
-    res.json(await runTest({ step, input, models, skillContent, refs, meetingId: meetingId ? Number(meetingId) : null, label, segmentId: segmentId ? Number(segmentId) : null }));
+    const { step, input, models, skillContent, refs, meetingId, label, segmentId, goldId, judge, judgeModel } = req.body;
+    res.json(await runTest({
+      step, input, models, skillContent, refs, meetingId: meetingId ? Number(meetingId) : null, label, segmentId: segmentId ? Number(segmentId) : null,
+      // '' of ontbrekend = standaardreferentie van de vergadering, 'geen' = niet vergelijken
+      goldId: goldId === 'geen' ? null : goldId ? Number(goldId) : undefined, judge: !!judge, judgeModel,
+    }));
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 api.get('/test/runs', (req, res) => {
   res.json(db.prepare(`SELECT t.id, t.meeting_id, t.step, t.model, t.skill_version, t.skill_draft, t.label, t.tokens_in, t.tokens_out, t.cost, t.ms, t.error, t.created_at,
-      length(t.input) AS input_chars, m.input_name FROM test_runs t LEFT JOIN meetings m ON m.id = t.meeting_id ORDER BY t.id DESC LIMIT 500`).all());
+      t.quality, t.quality_auto, t.quality_gold, t.quality_judge, t.judge_model, t.judge_cost, g.naam AS gold_naam,
+      length(t.input) AS input_chars, m.input_name FROM test_runs t LEFT JOIN gold_refs g ON g.id = t.gold_id LEFT JOIN meetings m ON m.id = t.meeting_id ORDER BY t.id DESC LIMIT 500`).all());
 });
 api.get('/test/runs/:id', (req, res) => {
   const t = getTest(Number(req.params.id));
@@ -590,6 +651,65 @@ api.get('/test/runs/:id', (req, res) => {
   t.log = db.prepare('SELECT ts, level, message, data FROM run_log WHERE test_id = ? ORDER BY id').all(t.id);
   res.json(t);
 });
+// Kwaliteitsscore opnieuw berekenen (bv. met een andere referentie) of laten beoordelen door een rechtermodel
+api.post('/test/runs/:id/score', (req, res) => {
+  const goldId = req.body?.goldId === undefined ? undefined : req.body.goldId && req.body.goldId !== 'geen' ? Number(req.body.goldId) : null;
+  const q = scoreTest(Number(req.params.id), { goldId });
+  if (!q) return res.status(400).json({ error: 'Test zonder uitvoer' });
+  res.json(q);
+});
+api.post('/test/runs/:id/judge', async (req, res) => {
+  try { res.json(await judgeTest(Number(req.params.id), { model: req.body?.model || undefined })); } catch (e) { res.status(400).json({ error: e.message }); }
+});
+api.get('/quality/weights', (req, res) => res.json(PILLAR_WEIGHTS));
+
+// ---------------- Geverifieerde eindresultaten (referenties) ----------------
+const goldList = () => db.prepare(`SELECT g.id, g.meeting_id, g.naam, g.soort, g.bron, g.notitie, g.created_at, length(g.text) AS chars,
+    m.titel AS meeting_titel, m.datum AS meeting_datum, m.input_name,
+    (SELECT COUNT(*) FROM test_runs t WHERE t.gold_id = g.id) AS tests
+  FROM gold_refs g LEFT JOIN meetings m ON m.id = g.meeting_id ORDER BY g.id DESC`).all();
+api.get('/gold', (req, res) => res.json(goldList()));
+api.get('/gold/:id', (req, res) => {
+  const g = db.prepare('SELECT * FROM gold_refs WHERE id = ?').get(req.params.id);
+  return g ? res.json(g) : notFound(res);
+});
+async function goldText(req) {
+  if (!req.file) return req.body.text != null && String(req.body.text).trim() ? String(req.body.text) : null;
+  try {
+    const type = detectType(req.file.originalname);
+    // Ondertitels: enkel de tekst (tijdcodes en cue-nummers zouden de vergelijking vertroebelen)
+    if (type === 'vtt' || type === 'srt') return parseCues(fs.readFileSync(req.file.path, 'utf8')).map((c) => c.text).join('\n');
+    return await readAgendaText(req.file.path);
+  } finally { fs.rm(req.file.path, { force: true }, () => {}); }
+}
+api.post('/gold', upload.single('file'), async (req, res) => {
+  let text;
+  try { text = await goldText(req); } catch (e) { return res.status(400).json({ error: e.message }); }
+  if (!text) return res.status(400).json({ error: 'Geen tekst of bestand meegegeven.' });
+  const r = db.prepare('INSERT INTO gold_refs (meeting_id, naam, soort, bron, text, notitie) VALUES (?, ?, ?, ?, ?, ?)').run(
+    req.body.meeting_id ? Number(req.body.meeting_id) : null, req.body.naam || req.file?.originalname || 'Referentie',
+    req.body.soort === 'verslag' ? 'verslag' : 'transcript', req.file?.originalname || 'geplakt', text, req.body.notitie || null);
+  res.json({ id: r.lastInsertRowid });
+});
+api.put('/gold/:id', upload.single('file'), async (req, res) => {
+  const g = db.prepare('SELECT * FROM gold_refs WHERE id = ?').get(req.params.id);
+  if (!g) return notFound(res);
+  let text;
+  try { text = await goldText(req); } catch (e) { return res.status(400).json({ error: e.message }); }
+  db.prepare('UPDATE gold_refs SET meeting_id = ?, naam = ?, soort = ?, notitie = ?, text = COALESCE(?, text), bron = COALESCE(?, bron) WHERE id = ?').run(
+    req.body.meeting_id ? Number(req.body.meeting_id) : null, req.body.naam || g.naam, req.body.soort === 'verslag' ? 'verslag' : 'transcript',
+    req.body.notitie || null, text, req.file ? req.file.originalname : text ? 'geplakt' : null, g.id);
+  // Tests die deze referentie gebruiken opnieuw scoren
+  if (text) for (const t of db.prepare('SELECT id FROM test_runs WHERE gold_id = ?').all(g.id)) scoreTest(t.id);
+  res.json({ ok: true });
+});
+api.delete('/gold/:id', (req, res) => {
+  const ids = db.prepare('SELECT id FROM test_runs WHERE gold_id = ?').all(req.params.id);
+  db.prepare('DELETE FROM gold_refs WHERE id = ?').run(req.params.id);
+  for (const t of ids) scoreTest(t.id, { goldId: null });
+  res.json({ ok: true });
+});
+
 api.delete('/test/runs/:id', (req, res) => {
   db.prepare('DELETE FROM test_runs WHERE id = ?').run(req.params.id);
   db.prepare('DELETE FROM run_log WHERE test_id = ?').run(req.params.id);

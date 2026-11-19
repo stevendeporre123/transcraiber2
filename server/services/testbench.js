@@ -10,6 +10,7 @@ import { analyzeOutput, logSummary, BLOCK_STEPS } from './analyze.js';
 import { validateNormalizer, validateCleaner } from './pipeline.js';
 import { log } from './logger.js';
 import { listSegments } from './prepare.js';
+import { scoreTest, judgeTest, defaultGold } from './quality.js';
 
 export const TEST_STEPS = ['normalizer', 'cleaner', 'resolver', 'writer', 'intake', 'agenda'];
 
@@ -121,7 +122,7 @@ export function insertTestRow(prep, model, { label, batchId } = {}) {
 }
 
 /** Voert een voorbereide test uit met één model en bewaart het resultaat in test_runs. */
-export async function runTestModel(prep, model, { label, batchId, testId, signal } = {}) {
+export async function runTestModel(prep, model, { label, batchId, testId, signal, goldId, judge, judgeModel } = {}) {
   const { step, skill, draft, user, inputBlocks, system, refInfo, skillChars, isJson } = prep;
   testId = testId || insertTestRow(prep, model, { label, batchId });
   const L = (level, message, data) => log({ testId, level, step, message, data });
@@ -138,7 +139,18 @@ export async function runTestModel(prep, model, { label, batchId, testId, signal
     db.prepare('UPDATE test_runs SET model = ?, output = ?, analysis = ?, tokens_in = ?, tokens_out = ?, cost = ?, ms = ?, ms_net = ?, http_retries = ? WHERE id = ?')
       .run(res.model || model, res.text, JSON.stringify({ analysis, validation, refs: refInfo, finishReason: res.finishReason }), res.tokensIn, res.tokensOut, res.cost, res.ms, msNet, httpRetries, testId);
     L('info', `antwoord in ${(res.ms / 1000).toFixed(1)} s${httpRetries ? ` (${httpRetries} herpoging(en), netto ${(msNet / 1000).toFixed(1)} s)` : ''}, ${res.tokensIn}/${res.tokensOut} tokens, $${(res.cost || 0).toFixed(4)}`, analysis ? logSummary(analysis) : undefined);
-    return { id: testId, model: res.model || model, requested: model, output: res.text, analysis, validation, refs: refInfo, finishReason: res.finishReason, tokens_in: res.tokensIn, tokens_out: res.tokensOut, cost: res.cost, ms: res.ms, ms_net: msNet, http_retries: httpRetries, system, user };
+    // Kwaliteitsscore: automatisch + gold reference (+ optioneel rechtermodel)
+    let quality = null;
+    try {
+      quality = scoreTest(testId, { goldId: goldId === undefined ? defaultGold(prep.meetingId) : goldId });
+      if (judge) {
+        try { quality = { ...quality, ...(await judgeTest(testId, { model: judgeModel || undefined })) }; } catch (e) {
+          L('warn', `beoordeling door rechtermodel mislukt: ${e.message}`);
+          quality = { ...quality, judgeError: e.message };
+        }
+      }
+    } catch (e) { L('warn', `kwaliteitsscore mislukt: ${e.message}`); }
+    return { id: testId, ...qualityFields(quality), model: res.model || model, requested: model, output: res.text, analysis, validation, refs: refInfo, finishReason: res.finishReason, tokens_in: res.tokensIn, tokens_out: res.tokensOut, cost: res.cost, ms: res.ms, ms_net: msNet, http_retries: httpRetries, system, user };
   } catch (e) {
     db.prepare('UPDATE test_runs SET error = ? WHERE id = ?').run(e.message, testId);
     L('error', e.message);
@@ -147,18 +159,24 @@ export async function runTestModel(prep, model, { label, batchId, testId, signal
 }
 
 /**
- * opts: { step, input, models: [..], skillContent?, refs?, meetingId?, label?, segmentId? }
- * Geeft per model { id, model, output, analysis, validation, tokens, cost, ms, error }.
+ * opts: { step, input, models: [..], skillContent?, refs?, meetingId?, label?, segmentId?, goldId?, judge?, judgeModel? }
+ * Geeft per model { id, model, output, analysis, validation, quality, tokens, cost, ms, error }.
+ * goldId: geverifieerd eindresultaat om mee te vergelijken (undefined = standaard van de vergadering, null = geen).
  */
-export async function runTest({ models, label, ...opts }) {
+export async function runTest({ models, label, goldId, judge, judgeModel, ...opts }) {
   const prep = prepareTest(opts);
   const list = (models?.length ? models : [defaultModel(opts.step)]).filter(Boolean).slice(0, 4);
-  return Promise.all(list.map((model) => runTestModel(prep, model, { label })));
+  return Promise.all(list.map((model) => runTestModel(prep, model, { label, goldId, judge, judgeModel })));
+}
+
+function qualityFields(q) {
+  if (!q) return {};
+  return { quality: q.quality, quality_auto: q.quality_auto, quality_gold: q.quality_gold, quality_judge: q.quality_judge, quality_detail: q.detail, judge_error: q.judgeError };
 }
 
 export function getTest(id) {
   const t = db.prepare('SELECT * FROM test_runs WHERE id = ?').get(id);
   if (!t) return null;
   const a = json(t.analysis, {}) || {};
-  return { ...t, analysis: a.analysis || null, validation: a.validation || null, refs: a.refs || [], finishReason: a.finishReason };
+  return { ...t, analysis: a.analysis || null, validation: a.validation || null, refs: a.refs || [], finishReason: a.finishReason, quality_detail: json(t.quality_detail, null) };
 }

@@ -73,6 +73,13 @@
             </div>
             <div class="form-text">Je test altijd met de tekst hierboven: aanpassingen zijn meteen testbaar zonder op te slaan.</div>
           </details>
+          <div class="row g-2 mt-2 align-items-end">
+            <div class="col-md-5"><label class="form-label small mb-0">Vergelijken met referentie <i class="bi bi-info-circle" title="Geverifieerd eindresultaat (letterlijke, opgeschoonde transcriptie). Beheer onderaan deze pagina."></i></label>
+              <select class="form-select form-select-sm" id="t-gold"><option value="">automatisch (van de vergadering)</option><option value="geen">geen</option></select></div>
+            <div class="col-md-3"><div class="form-check mb-1"><input class="form-check-input" type="checkbox" id="t-judge">
+              <label class="form-check-label small" for="t-judge" title="Een rechtermodel scoort namen, terminologie, trouw en opschoning (1-5). Kost extra tokens.">Beoordeel met rechtermodel</label></div></div>
+            <div class="col-md-4"><label class="form-label small mb-0">Rechtermodel</label><input class="form-control form-control-sm" id="t-judge-model" list="models-list"></div>
+          </div>
           <div class="d-flex align-items-center gap-2 mt-3">
             <button class="btn btn-primary" id="t-run"><i class="bi bi-play-fill"></i> Test uitvoeren</button>
             <button class="btn btn-outline-primary" id="t-compare" title="Dezelfde invoer en skilltekst met meerdere modellen, met een overzicht van tokens, kost en duur"><i class="bi bi-bar-chart-line"></i> Vergelijk modellen…</button>
@@ -88,8 +95,42 @@
 
   <h2 class="h5 mt-4">Eerdere tests</h2>
   <table id="t-history" class="table table-sm table-hover w-100">
-    <thead><tr><th>#</th><th>Wanneer</th><th>Skill</th><th>Model</th><th>Versie</th><th>Label</th><th>Invoer</th><th>Tokens</th><th>Kost</th><th>Tijd</th><th></th></tr></thead>
+    <thead><tr><th>#</th><th>Wanneer</th><th>Skill</th><th>Model</th><th>Versie</th><th>Label</th><th>Invoer</th><th title="Kwaliteitsscore 0-100 (A = automatisch, R = referentie, J = rechtermodel)">Kwaliteit</th><th>Tokens</th><th>Kost</th><th>Tijd</th><th></th></tr></thead>
   </table>
+
+  <div class="d-flex align-items-center mt-4 mb-2">
+    <h2 class="h5 mb-0 me-auto">Referenties <small class="text-body-secondary fs-6">geverifieerde eindresultaten om mee te vergelijken</small></h2>
+    <button class="btn btn-sm btn-outline-primary" id="g-new"><i class="bi bi-plus-lg"></i> Referentie toevoegen</button>
+  </div>
+  <table id="g-table" class="table table-sm table-hover w-100">
+    <thead><tr><th>#</th><th>Naam</th><th>Vergadering</th><th>Soort</th><th>Bron</th><th>Grootte</th><th>Tests</th><th>Toegevoegd</th></tr></thead>
+  </table>
+</div>
+
+<div class="modal fade" id="m-gold" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <form class="modal-content" id="f-gold">
+      <div class="modal-header"><h5 class="modal-title">Referentie</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-2">
+          <div class="col-md-6"><label class="form-label small mb-0">Naam</label><input class="form-control form-control-sm" name="naam" placeholder="bv. Gemeenteraad 20/10, nagekeken"></div>
+          <div class="col-md-6"><label class="form-label small mb-0">Vergadering</label><select class="form-select form-select-sm" name="meeting_id" id="g-meeting"><option value="">— geen —</option></select></div>
+          <div class="col-md-6"><label class="form-label small mb-0">Soort</label><select class="form-select form-select-sm" name="soort">
+            <option value="transcript">letterlijke, opgeschoonde transcriptie</option><option value="verslag">verslag</option></select></div>
+          <div class="col-md-6"><label class="form-label small mb-0">Notitie</label><input class="form-control form-control-sm" name="notitie"></div>
+          <div class="col-12"><label class="form-label small mb-0">Bestand (PDF, DOCX, TXT, SRT of VTT)</label><input type="file" class="form-control form-control-sm" name="file" accept=".pdf,.docx,.txt,.srt,.vtt"></div>
+          <div class="col-12"><label class="form-label small mb-0">… of tekst plakken <span class="text-body-secondary" id="g-text-info"></span></label>
+            <textarea class="form-control code" name="text" rows="12" spellcheck="false" placeholder="Tip: in blokformaat (## B001 | spreker: Naam) wordt per blok vergeleken, ook de sprekers."></textarea></div>
+        </div>
+        <div class="form-text">Een test op een vergadering gebruikt automatisch de meest recente referentie van die vergadering. De score zoekt zelf het stuk van de referentie dat bij de geteste blokken hoort.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-danger me-auto btn-delete d-none"><i class="bi bi-trash"></i> Verwijderen</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+        <button class="btn btn-primary"><i class="bi bi-save"></i> Opslaan</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Modal: modelvergelijking voor deze stap -->

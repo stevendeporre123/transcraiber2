@@ -29,4 +29,5 @@ export const STEPS = {
   resolver: { skill: 'speaker-resolver', label: 'Speaker resolver' },
   writer: { skill: 'verslag-writer', label: 'Verslag writer' },
   assistant: { skill: 'skill-assistent', label: 'Skill-assistent' },
+  judge: { skill: 'kwaliteitsrechter', label: 'Kwaliteitsrechter (Testbank)' },
 };

@@ -46,12 +46,12 @@ export function startBatch(opts) {
   throw new Error(`Onbekende modus ${opts.mode}`);
 }
 
-function startStepBatch({ step, input, models, skillContent, refs, meetingId, segmentId, label, inputDesc, concurrency }) {
+function startStepBatch({ step, input, models, skillContent, refs, meetingId, segmentId, label, inputDesc, concurrency, goldId, judge, judgeModel }) {
   if (!TEST_STEPS.includes(step)) throw new Error(`Onbekende stap ${step}`);
   const prep = prepareTest({ step, input, skillContent, refs, meetingId: meetingId ? Number(meetingId) : null, segmentId: segmentId ? Number(segmentId) : null });
   const desc = inputDesc || `${prep.inputBlocks.length ? `${prep.inputBlocks.length} blokken` : `${prep.user.length} tekens`}${prep.draft ? ', conceptskill' : ''}`;
   const batchId = db.prepare(`INSERT INTO model_batches (mode, step, meeting_id, label, input_desc, models, options) VALUES ('step', ?, ?, ?, ?, ?, ?)`)
-    .run(step, prep.meetingId, label || null, desc, JSON.stringify(models), JSON.stringify({ concurrency, skill: prep.skill.naam, skill_version: prep.skill.version, draft: prep.draft, segmentId: segmentId || null }))
+    .run(step, prep.meetingId, label || null, desc, JSON.stringify(models), JSON.stringify({ concurrency, skill: prep.skill.naam, skill_version: prep.skill.version, draft: prep.draft, segmentId: segmentId || null, goldId: goldId ?? 'standaard', judge: !!judge, judgeModel: judgeModel || null }))
     .lastInsertRowid;
   // Alle rijen meteen aanmaken: de overzichtstabel toont zo ook wat nog in de wachtrij staat.
   const rows = models.map((model) => ({ model, testId: insertTestRow(prep, model, { label: label || `vergelijking #${batchId}`, batchId }) }));
@@ -60,7 +60,7 @@ function startStepBatch({ step, input, models, skillContent, refs, meetingId, se
   log({ level: 'info', step, message: `modelvergelijking #${batchId} gestart: ${STEPS[step].skill} met ${models.length} modellen`, data: { modellen: models, invoer: desc } });
   (async () => {
     try {
-      await pool(rows, concurrency, ({ model, testId }) => runTestModel(prep, model, { testId, signal: ctrl.signal }), ctrl.signal);
+      await pool(rows, concurrency, ({ model, testId }) => runTestModel(prep, model, { testId, signal: ctrl.signal, goldId, judge, judgeModel }), ctrl.signal);
     } finally {
       // Niet gestarte of afgebroken rijen afsluiten
       db.prepare("UPDATE test_runs SET error = 'Gestopt door gebruiker' WHERE batch_id = ? AND output IS NULL AND error IS NULL").run(batchId);
@@ -142,7 +142,7 @@ const secondsBetween = (a, b) => (a && b ? Math.max(0, (Date.parse(`${b.replace(
 export function batchRows(b) {
   if (b.mode === 'step') {
     const requested = json(b.models, []) || [];
-    return db.prepare('SELECT id, model, tokens_in, tokens_out, cost, ms, ms_net, http_retries, error, output IS NOT NULL AS done, analysis, created_at FROM test_runs WHERE batch_id = ? ORDER BY id').all(b.id)
+    return db.prepare('SELECT id, model, tokens_in, tokens_out, cost, ms, ms_net, http_retries, error, output IS NOT NULL AS done, analysis, created_at, quality, quality_auto, quality_gold, quality_judge, judge_cost FROM test_runs WHERE batch_id = ? ORDER BY id').all(b.id)
       .map((t, i) => {
         const a = json(t.analysis, {}) || {};
         // Rijen zijn in de volgorde van de gekozen modellen aangemaakt; OpenRouter kan een andere naam teruggeven
@@ -158,6 +158,7 @@ export function batchRows(b) {
           finish_reason: a.finishReason || null,
           stats, // gewijzigd, gelijk, samengevoegd, ontbreekt, vervangingen, zekerheid, punten …
           json_error: a.analysis?.error || null,
+          quality: t.quality, quality_auto: t.quality_auto, quality_gold: t.quality_gold, quality_judge: t.quality_judge, judge_cost: t.judge_cost,
         };
       });
   }

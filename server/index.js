@@ -7,11 +7,13 @@ import { markInterrupted } from './services/pipeline.js';
 import { markPrepInterrupted } from './services/prepare.js';
 import { markBatchesInterrupted } from './services/batch.js';
 import { api } from './routes.js';
+import { backfillQuality } from './services/quality.js';
 
 seedIfEmpty();
 markInterrupted();
 markPrepInterrupted();
 markBatchesInterrupted();
+try { backfillQuality(); } catch (e) { console.error(`kwaliteitsscores: ${e.message}`); }
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));

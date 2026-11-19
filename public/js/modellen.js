@@ -111,10 +111,12 @@ function bestCards(rows) {
   const card = (icon, label, r, val) => (r ? `<div class="col-6 col-lg-3"><div class="card"><div class="card-body py-2">
       <div class="small text-body-secondary"><i class="bi ${icon}"></i> ${label}</div><div class="fw-semibold text-truncate"><code>${App.esc(r.model)}</code></div><div class="small">${val}</div></div></div></div>` : '');
   const cheap = min('cost'); const fast = min('ms_net'); const lean = min('tokens_out');
+  const scored = ok.filter((r) => r.quality != null);
+  const best = scored.length ? scored.reduce((a, r) => (a.quality >= r.quality ? a : r)) : null;
   const total = ok.reduce((n, r) => n + (r.cost || 0), 0);
   return card('bi-piggy-bank', 'Goedkoopst', cheap, App.fmtCost(cheap?.cost))
     + card('bi-lightning', 'Snelst (netto)', fast, App.fmtMs(fast?.ms_net))
-    + card('bi-text-paragraph', 'Minste tokens uit', lean, `${lean?.tokens_out} tokens`)
+    + (best ? card('bi-trophy', 'Hoogste score', best, `${Math.round(best.quality)} / 100`) : card('bi-text-paragraph', 'Minste tokens uit', lean, `${lean?.tokens_out} tokens`))
     + `<div class="col-6 col-lg-3"><div class="card"><div class="card-body py-2"><div class="small text-body-secondary"><i class="bi bi-cash-stack"></i> Totaal vergelijking</div>
       <div class="fw-semibold">${App.fmtCost(total)}</div><div class="small">${ok.length} van ${rows.length} modellen klaar</div></div></div></div>`;
 }
@@ -146,6 +148,13 @@ async function initDetail(id) {
         return `${App.fmtMs(v)}${r.wall_ms != null ? `<br><span class="small text-body-secondary" title="Van start tot einde van de run, met parallelle delen">${App.fmtMs(r.wall_ms)} wandklok</span>` : ''}`;
       } },
       { data: 'retries', render: (v, t) => (t === 'display' ? (v ? `<span class="badge text-bg-warning">${v}</span>` : '0') : v) },
+      { data: 'quality', render: (q, t, r) => {
+        if (t !== 'display') return q ?? -1;
+        if (q == null) return r.kind === 'run' ? '<span class="small text-body-secondary" title="Kwaliteitsscore bestaat enkel voor Testbank-stappen">–</span>' : '';
+        const cls = q >= 85 ? 'success' : q >= 65 ? 'warning' : 'danger';
+        const parts = [['A', r.quality_auto], ['R', r.quality_gold], ['J', r.quality_judge]].filter(([, v]) => v != null).map(([k, v]) => `${k}${Math.round(v)}`).join(' ');
+        return `<span class="badge text-bg-${cls}">${Math.round(q)}</span><br><span class="small text-body-secondary">${parts}</span>`;
+      } },
       { data: null, orderable: false, render: (r) => quality(r, batch) },
       { data: null, orderable: false, className: 'text-nowrap', render: (r) => {
         const view = r.kind === 'run' ? `run.html?id=${r.id}` : `testen.html?test=${r.id}`;

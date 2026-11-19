@@ -13,7 +13,8 @@ export function defaultModel(step) {
 }
 
 /**
- * Eén chat-completion. Geeft { text, tokensIn, tokensOut, cost, model, ms }.
+ * Eén chat-completion. Geeft { text, tokensIn, tokensOut, cost, model, ms, msNet, httpAttempts }.
+ * ms is de totale tijd (met herpogingen), msNet enkel de geslaagde aanroep.
  * Herprobeert bij 429/5xx met exponentiële backoff.
  */
 export async function complete({ model, system, user, temperature, json = false, maxTokens, signal }) {
@@ -29,7 +30,8 @@ export async function complete({ model, system, user, temperature, json = false,
     }
     if (signal?.aborted) throw new StopError();
     const text = mockCompletion({ system, user, json });
-    return { text, tokensIn: Math.round((system.length + user.length) / 4), tokensOut: Math.round(text.length / 4), cost: 0, model: 'mock', ms: Date.now() - t0 };
+    const ms = Date.now() - t0;
+    return { text, tokensIn: Math.round((system.length + user.length) / 4), tokensOut: Math.round(text.length / 4), cost: 0, model: 'mock', ms, msNet: ms, httpAttempts: 1 };
   }
   const key = apiKey();
   if (!key) throw new Error('Geen OpenRouter API-key ingesteld (Instellingen of OPENROUTER_API_KEY).');
@@ -48,6 +50,7 @@ export async function complete({ model, system, user, temperature, json = false,
   for (let attempt = 0; attempt < 4; attempt++) {
     if (attempt) await new Promise((r) => setTimeout(r, 2000 * 2 ** (attempt - 1)));
     if (stopped()) throw new StopError();
+    const tAttempt = Date.now();
     let res;
     try {
       res = await fetch(`${BASE}/chat/completions`, {
@@ -85,7 +88,9 @@ export async function complete({ model, system, user, temperature, json = false,
       tokensOut: data.usage?.completion_tokens || 0,
       cost: data.usage?.cost || 0,
       model: data.model || model,
-      ms: Date.now() - t0,
+      ms: Date.now() - t0,              // totaal, met herpogingen en wachttijd
+      msNet: Date.now() - tAttempt,     // enkel de geslaagde aanroep
+      httpAttempts: attempt + 1,
     };
   }
   throw lastErr || new Error('OpenRouter: onbekende fout');

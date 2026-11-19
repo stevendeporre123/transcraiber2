@@ -239,6 +239,21 @@ CREATE TABLE IF NOT EXISTS meeting_segments (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Modelvergelijking: dezelfde invoer met meerdere modellen (stap via test_runs, pipeline via runs)
+CREATE TABLE IF NOT EXISTS model_batches (
+  id INTEGER PRIMARY KEY,
+  mode TEXT NOT NULL,          -- step (Testbank-stap) of pipeline (volledige run)
+  step TEXT,                   -- mode step: de geteste stap; mode pipeline: stoppen na
+  meeting_id INTEGER REFERENCES meetings(id) ON DELETE SET NULL,
+  label TEXT,
+  input_desc TEXT,             -- leesbare omschrijving van de invoer
+  models TEXT NOT NULL,        -- JSON array
+  options TEXT,                -- JSON
+  status TEXT NOT NULL DEFAULT 'bezig',  -- bezig, klaar, gestopt, onderbroken
+  created_at TEXT DEFAULT (datetime('now')),
+  finished_at TEXT
+);
+
 -- Geverifieerde eindresultaten (gold reference) om testuitvoer mee te vergelijken
 CREATE TABLE IF NOT EXISTS gold_refs (
   id INTEGER PRIMARY KEY,
@@ -287,6 +302,13 @@ addColumn('test_runs', 'quality_detail', 'TEXT');
 addColumn('test_runs', 'gold_id', 'INTEGER');
 addColumn('test_runs', 'judge_model', 'TEXT');
 addColumn('test_runs', 'judge_cost', 'REAL');
+// Modelvergelijking: netto duur (enkel de aanvaarde aanroep, zonder herpogingen) en aantal herpogingen
+addColumn('run_steps', 'ms_net', 'INTEGER');
+addColumn('run_steps', 'http_retries', 'INTEGER');
+addColumn('test_runs', 'ms_net', 'INTEGER');
+addColumn('test_runs', 'http_retries', 'INTEGER');
+addColumn('test_runs', 'batch_id', 'INTEGER');
+addColumn('runs', 'batch_id', 'INTEGER');
 
 export function getSetting(key, fallback = null) {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);

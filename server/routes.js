@@ -12,6 +12,8 @@ import { listModels, apiKey, defaultModel } from './services/openrouter.js';
 import { addTermProposal, replacementsFromEdit, recordCorrection, promoteTerm } from './services/learn.js';
 import { saveSkillVersion, proposeSkillChange, skillDiff } from './services/skills.js';
 import { meetingBlocks, agendaText, runTest, getTest, TEST_STEPS } from './services/testbench.js';
+import { startBatch, stopBatch, listBatches, getBatch, deleteBatch, MAX_MODELS } from './services/batch.js';
+import { parseBlocks, parseSpeakerHeader } from './services/blockfmt.js';
 import { scoreTest, judgeTest, PILLAR_WEIGHTS } from './services/quality.js';
 import { prepareMeeting, stopPrepare, isPreparing, listSegments, loadBlocks as loadMeetingBlocks, setSegmentStart, addSegment, updateSegment, deleteSegment } from './services/prepare.js';
 import { POINT_TYPES } from './services/agenda-parse.js';
@@ -541,6 +543,72 @@ api.get('/compare', (req, res) => {
   }
   const meta = (r) => ({ id: r.id, label: r.label, options: json(r.options, {}), cost: r.cost, tokens_in: r.tokens_in, tokens_out: r.tokens_out, skill_versions: json(r.skill_versions, {}) });
   res.json({ a: meta(ra), b: meta(rb), same, rows });
+});
+
+// Twee testbank-tests vergelijken (zelfde invoer, ander model): per blok de uitvoer van A tegenover B
+api.get('/compare/tests', (req, res) => {
+  const ta = db.prepare('SELECT * FROM test_runs WHERE id = ?').get(req.query.a);
+  const tb = db.prepare('SELECT * FROM test_runs WHERE id = ?').get(req.query.b);
+  if (!ta || !tb) return notFound(res);
+  if (ta.step !== tb.step) return res.status(400).json({ error: 'Tests van een andere skill kunnen niet vergeleken worden.' });
+  const rows = [];
+  let same = 0;
+  if (['writer', 'agenda'].includes(ta.step)) {
+    // JSON-uitvoer: netjes opmaken en als één geheel vergelijken
+    const pretty = (t) => { try { return JSON.stringify(JSON.parse(String(t.output || '').replace(/^```(?:json)?|```\s*$/g, '')), null, 2); } catch { return t.output || ''; } };
+    const a = pretty(ta); const b = pretty(tb);
+    if (a === b) same++;
+    else rows.push({ block_id: 'JSON', diff: diffWordsWithSpace(a, b), text_a: a, text_b: b, speakerDiff: false });
+  } else {
+    const input = parseBlocks(ta.input || '').blocks;
+    const A = new Map(parseBlocks(ta.output || '').blocks.map((x) => [x.id, x]));
+    const B = new Map(parseBlocks(tb.output || '').blocks.map((x) => [x.id, x]));
+    const ids = input.length ? input.map((x) => x.id) : [...new Set([...A.keys(), ...B.keys()])];
+    const spk = (x) => (x ? (ta.step === 'resolver' ? parseSpeakerHeader(x.speaker).speaker_name : x.speaker) : null);
+    for (const id of ids) {
+      const xa = A.get(id); const xb = B.get(id);
+      const sa = spk(xa); const sb = spk(xb);
+      // speaker-resolver geeft alleen koppen terug: de tekst komt dan uit de invoer
+      const ta2 = ta.step === 'resolver' ? null : xa?.text ?? null;
+      const tb2 = ta.step === 'resolver' ? null : xb?.text ?? null;
+      const speakerDiff = (sa || '') !== (sb || '');
+      if (ta2 === tb2 && !speakerDiff && xa && xb) { same++; continue; }
+      rows.push({
+        block_id: id, speaker_a: sa, speaker_b: sb, speakerDiff,
+        merged_a: xa ? null : 'ontbreekt', merged_b: xb ? null : 'ontbreekt',
+        diff: ta2 != null && tb2 != null ? diffWordsWithSpace(ta2, tb2) : null, text_a: ta2, text_b: tb2,
+        raw: input.find((x) => x.id === id)?.text,
+      });
+    }
+  }
+  const meta = (t) => ({ id: t.id, kind: 'test', step: t.step, model: t.model, label: t.label, skill_version: t.skill_version, skill_draft: t.skill_draft,
+    cost: t.cost, tokens_in: t.tokens_in, tokens_out: t.tokens_out, ms: t.ms, ms_net: t.ms_net, batch_id: t.batch_id, error: t.error });
+  res.json({ a: meta(ta), b: meta(tb), sameInput: ta.input === tb.input, same, rows });
+});
+
+// ---------------- Modelvergelijking ----------------
+api.get('/batches', (req, res) => res.json(listBatches()));
+api.get('/batches/:id', (req, res) => {
+  const b = getBatch(Number(req.params.id));
+  b ? res.json(b) : notFound(res);
+});
+api.post('/batches', (req, res) => {
+  if (!config.mockLlm && !apiKey()) return res.status(400).json({ error: 'Stel eerst een OpenRouter API-key in (Instellingen).' });
+  try {
+    const b = req.body || {};
+    const id = startBatch({
+      ...b,
+      meetingId: b.meetingId ? Number(b.meetingId) : null,
+      segmentId: b.segmentId ? Number(b.segmentId) : null,
+      goldId: b.goldId === 'geen' ? null : b.goldId ? Number(b.goldId) : undefined,
+      judge: !!b.judge,
+    });
+    res.json({ id, maxModels: MAX_MODELS });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+api.post('/batches/:id/stop', (req, res) => res.json({ ok: true, stopped: stopBatch(Number(req.params.id)) }));
+api.delete('/batches/:id', (req, res) => {
+  try { deleteBatch(Number(req.params.id)); res.json({ ok: true }); } catch (e) { res.status(409).json({ error: e.message }); }
 });
 
 // ---------------- Debug-log ----------------

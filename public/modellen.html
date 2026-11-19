@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modelvergelijking · Transcraiber</title>
+  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/vendor/datatables-bs5/css/dataTables.bootstrap5.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid">
+
+  <!-- Overzicht van alle vergelijkingen -->
+  <div id="v-list" class="d-none">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <h1 class="h4 mb-0 me-auto">Modelvergelijking <small class="text-body-secondary fs-6">dezelfde invoer, meerdere OpenRouter-modellen</small></h1>
+      <a class="btn btn-sm btn-outline-primary" href="testen.html"><i class="bi bi-eyedropper"></i> Eén stap vergelijken (Testbank)</a>
+      <button class="btn btn-sm btn-primary" id="v-new"><i class="bi bi-plus-lg"></i> Pipeline vergelijken</button>
+    </div>
+    <p class="small text-body-secondary">Eén stap vergelijk je in de <a href="testen.html">Testbank</a>: laad de invoer, kies de skill en klik op <b>Vergelijk modellen</b>.
+      Een volledige pipeline (of tot een bepaalde stap) op een vergadering start je hier. Klik op een rij voor de resultaten per model.</p>
+    <table id="v-batches" class="table table-sm table-hover w-100">
+      <thead><tr><th>#</th><th>Wanneer</th><th>Soort</th><th>Stap</th><th>Invoer</th><th>Label</th><th>Modellen</th><th>Klaar</th><th>Kost</th><th>Status</th><th></th></tr></thead>
+    </table>
+  </div>
+
+  <!-- Detail van één vergelijking -->
+  <div id="v-detail" class="d-none">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <a href="modellen.html" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+      <h1 class="h4 mb-0 me-auto" id="d-title">Vergelijking</h1>
+      <span id="d-status"></span>
+      <button class="btn btn-sm btn-outline-warning d-none" id="d-stop"><i class="bi bi-stop-fill"></i> Stoppen</button>
+      <button class="btn btn-sm btn-outline-danger" id="d-delete"><i class="bi bi-trash"></i> Verwijderen</button>
+    </div>
+    <div class="small text-body-secondary mb-2" id="d-meta"></div>
+    <div class="row g-2 mb-3" id="d-best"></div>
+    <div class="small mb-1 text-body-secondary">
+      Kies met het bolletje een <b>referentie</b>; elke andere rij krijgt een knop om de uitvoer per blok met de referentie te vergelijken.
+      <b>Netto duur</b> = enkel de aanvaarde modelaanroep(en), zonder herpogingen en wachttijd; <b>totaal</b> = alles samen.
+    </div>
+    <table id="d-rows" class="table table-sm table-hover w-100">
+      <thead><tr><th title="Referentie">Ref</th><th>Model</th><th>Status</th><th>Tokens in</th><th>Tokens uit</th><th>Kost</th><th>Netto duur</th><th>Totaal</th><th>Herpogingen</th><th title="Kwaliteitsscore 0-100 (A = automatisch, R = referentie, J = rechtermodel)">Score</th><th>Kwaliteit</th><th></th></tr></thead>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: nieuwe pipelinevergelijking -->
+<div class="modal fade" id="p-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <form class="modal-content" id="p-form">
+      <div class="modal-header"><h5 class="modal-title">Pipeline vergelijken over modellen</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="row g-2">
+          <div class="col-md-8"><label class="form-label">Vergadering</label>
+            <select class="form-select" name="meetingId" id="p-meeting" required></select>
+            <div class="form-text" id="p-meeting-info"></div></div>
+          <div class="col-md-4"><label class="form-label">Stoppen na</label>
+            <select class="form-select" name="stopAfter">
+              <option value="normalizer">gentse-normalizer</option>
+              <option value="cleaner">transcript-cleaner</option>
+              <option value="resolver">speaker-resolver</option>
+              <option value="writer" selected>volledige pipeline</option>
+            </select></div>
+          <div class="col-md-3"><label class="form-label">Van blok</label><input type="number" min="1" class="form-control" name="blockFrom" placeholder="1"></div>
+          <div class="col-md-3"><label class="form-label">Tot en met</label><input type="number" min="1" class="form-control" name="blockTo" placeholder="alles"></div>
+          <div class="col-md-3"><label class="form-label">Woorden per deel</label><input type="number" min="300" max="8000" step="100" class="form-control" name="chunkWords" placeholder="instelling"></div>
+          <div class="col-md-3"><label class="form-label">Tegelijk</label>
+            <select class="form-select" name="concurrency"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
+          <div class="col-md-6 d-flex flex-column justify-content-end">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="writer" id="p-writer" checked>
+              <label class="form-check-label" for="p-writer">Verslag met samenvatting</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="includeOverig" id="p-overig">
+              <label class="form-check-label" for="p-overig">Ook stukken zonder agendapunt</label></div>
+          </div>
+          <div class="col-md-6"><label class="form-label">Label (optioneel)</label><input class="form-control" name="label" placeholder="bv. goedkope modellen op de mondelinge vragen"></div>
+          <div class="col-12"><label class="form-label">Modellen <small class="text-body-secondary">(elk model doet alle stappen)</small></label>
+            <div id="p-models"></div></div>
+        </div>
+        <div class="alert alert-info small mt-3 mb-0">Elk model krijgt een eigen run op exact dezelfde invoer. Bij een voorbereide vergadering
+          gaan de <b>geselecteerde agendapunten</b> mee. Gebruik <i>van/tot blok</i> en <i>stoppen na</i> om kosten te beperken.</div>
+      </div>
+      <div class="modal-footer">
+        <span class="small text-body-secondary me-auto" id="p-info"></span>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-play-fill"></i> Starten</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/vendor/datatables/dataTables.min.js"></script>
+<script src="/vendor/datatables-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/modellen.js"></script>
+</body>
+</html>

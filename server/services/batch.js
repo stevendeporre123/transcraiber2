@@ -7,15 +7,16 @@ import { prepareTest, insertTestRow, runTestModel, TEST_STEPS } from './testbenc
 import { runPipeline, stopRun, isActive, STOP_STEPS } from './pipeline.js';
 import { listSegments } from './prepare.js';
 import { log } from './logger.js';
+import { scoreRun } from './quality.js';
 
 export const MAX_MODELS = 12;
 const active = new Map(); // batchId → AbortController
 
 export const isBatchActive = (id) => active.has(Number(id));
 
-function cleanModels(models) {
+function cleanModels(models, min = 2) {
   const list = [...new Set((Array.isArray(models) ? models : []).map((m) => String(m || '').trim()).filter(Boolean))];
-  if (list.length < 2) throw new Error('Kies minstens twee modellen om te vergelijken.');
+  if (list.length < min) throw new Error(min > 1 ? 'Kies minstens twee modellen om te vergelijken.' : 'Kies minstens één model.');
   if (list.length > MAX_MODELS) throw new Error(`Maximaal ${MAX_MODELS} modellen per vergelijking.`);
   return list;
 }
@@ -39,7 +40,8 @@ function finish(batchId, signal) {
  * opts (pipeline): { mode: 'pipeline', meetingId, models, stopAfter?, blockFrom?, blockTo?, segmentIds?, includeOverig?, chunkWords?, writer?, label?, concurrency? }
  */
 export function startBatch(opts) {
-  const models = cleanModels(opts.models);
+  // Nieuwe test: één model mag ook (dan is het gewoon een gemeten run)
+  const models = cleanModels(opts.models, opts.newTest ? 1 : 2);
   const concurrency = Math.min(6, Math.max(1, Number(opts.concurrency) || (opts.mode === 'pipeline' ? 2 : 3)));
   if (opts.mode === 'step') return startStepBatch({ ...opts, models, concurrency });
   if (opts.mode === 'pipeline') return startPipelineBatch({ ...opts, models, concurrency });
@@ -70,7 +72,7 @@ function startStepBatch({ step, input, models, skillContent, refs, meetingId, se
   return batchId;
 }
 
-function startPipelineBatch({ meetingId, models, stopAfter, blockFrom, blockTo, segmentIds, includeOverig, chunkWords, writer, label, concurrency }) {
+function startPipelineBatch({ meetingId, models, stopAfter, blockFrom, blockTo, segmentIds, includeOverig, chunkWords, writer, label, concurrency, newTest, goldId }) {
   const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(meetingId);
   if (!m) throw new Error('Vergadering niet gevonden');
   if (m.prep_status === 'bezig') throw new Error('De voorbereiding van deze vergadering loopt nog.');
@@ -100,7 +102,7 @@ function startPipelineBatch({ meetingId, models, stopAfter, blockFrom, blockTo, 
   if (after !== 'writer') desc += `, stopt na ${after}`;
 
   const batchId = db.prepare(`INSERT INTO model_batches (mode, step, meeting_id, label, input_desc, models, options) VALUES ('pipeline', ?, ?, ?, ?, ?, ?)`)
-    .run(after, m.id, label || null, desc, JSON.stringify(models), JSON.stringify({ ...options, concurrency })).lastInsertRowid;
+    .run(after, m.id, label || null, desc, JSON.stringify(models), JSON.stringify({ ...options, concurrency, ...(newTest ? { newTest: true, goldId: goldId || null } : {}) })).lastInsertRowid;
   // Eén run per model, met datzelfde model voor elke LLM-stap
   const runIds = models.map((model) => {
     const perStep = { intake: model, normalizer: model, cleaner: model, resolver: model, writer: model };
@@ -111,7 +113,13 @@ function startPipelineBatch({ meetingId, models, stopAfter, blockFrom, blockTo, 
   active.set(batchId, ctrl);
   (async () => {
     try {
-      await pool(runIds, concurrency, (runId) => runPipeline(runId), ctrl.signal);
+      await pool(runIds, concurrency, async (runId) => {
+        await runPipeline(runId);
+        // Kwaliteitsscore meteen na de run (met de referentie als die er is)
+        if (newTest) {
+          try { scoreRun(runId, { goldId: goldId || null }); } catch (e) { log({ runId, level: 'warn', message: `kwaliteitsscore mislukt: ${e.message}` }); }
+        }
+      }, ctrl.signal);
     } finally {
       db.prepare("UPDATE runs SET status = 'gestopt', error = 'Vergelijking gestopt voor deze run begon' WHERE batch_id = ? AND status = 'wachtrij'").run(batchId);
       finish(batchId, ctrl.signal);
@@ -163,6 +171,7 @@ export function batchRows(b) {
       });
   }
   return db.prepare(`SELECT r.id, r.label, r.status, r.progress, r.error, r.cost, r.tokens_in, r.tokens_out, r.warnings, r.options, r.started_at, r.finished_at,
+      r.quality, r.quality_auto, r.quality_gold, r.quality_detail,
       (SELECT SUM(ms) FROM run_steps s WHERE s.run_id = r.id) AS ms,
       (SELECT SUM(COALESCE(ms_net, ms)) FROM run_steps s WHERE s.run_id = r.id) AS ms_net,
       (SELECT SUM(COALESCE(attempts, 1) - 1 + COALESCE(http_retries, 0)) FROM run_steps s WHERE s.run_id = r.id) AS retries,
@@ -178,6 +187,7 @@ export function batchRows(b) {
       tokens_in: t.i || 0, tokens_out: t.o || 0, cost: t.c || 0, ms: r.ms, ms_net: r.ms_net, retries: r.retries || 0,
       wall_ms: secondsBetween(r.started_at, r.finished_at),
       calls: r.calls, fallbacks: r.fallbacks, warnings: (json(r.warnings, []) || []).length, blocks: r.blocks,
+      quality: r.quality, quality_auto: r.quality_auto, quality_gold: r.quality_gold, quality_detail: json(r.quality_detail, null),
     };
   });
 }
@@ -189,6 +199,7 @@ export function listBatches() {
       ...b, models: json(b.models, []), options: json(b.options, {}), status: isBatchActive(b.id) ? 'bezig' : b.status,
       n: rows.length, done: rows.filter((r) => r.status === 'klaar').length,
       cost: rows.reduce((n, r) => n + (r.cost || 0), 0),
+      best: rows.reduce((n, r) => (r.quality != null && (n == null || r.quality > n) ? r.quality : n), null),
     };
   });
 }

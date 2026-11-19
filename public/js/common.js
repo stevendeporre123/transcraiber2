@@ -3,6 +3,7 @@
 
 const NAV = [
   ['index.html', 'bi-file-earmark-text', 'Transcripties'],
+  ['nieuwetest.html', 'bi-play-circle', 'Nieuwe test'],
   ['testen.html', 'bi-eyedropper', 'Testbank'],
   ['modellen.html', 'bi-bar-chart-line', 'Modelvergelijking'],
   ['skills.html', 'bi-magic', 'Skills'],
@@ -124,7 +125,7 @@ const App = {
    * Lijst van modellen kiezen (voor modelvergelijkingen): invoerveld met OpenRouter-datalist,
    * toevoegen met Enter of de knop, verwijderen per model. Geeft { get(), set(list) }.
    */
-  modelPicker(container, initial = []) {
+  modelPicker(container, initial = [], { min = 2 } = {}) {
     App.modelDatalist();
     let list = [];
     container.innerHTML = `<div class="input-group input-group-sm mb-2">
@@ -140,7 +141,7 @@ const App = {
         <span class="badge text-bg-secondary me-2">${i + 1}</span><code class="me-auto">${App.esc(m)}</code>
         <button type="button" class="btn btn-sm btn-link text-danger p-0 mp-del" data-i="${i}" title="Verwijderen"><i class="bi bi-x-lg"></i></button></li>`).join('')
         || '<li class="list-group-item text-body-secondary py-1">Nog geen modellen gekozen</li>';
-      container.querySelector('.mp-info').textContent = `${list.length} model(len). Minstens 2, hoogstens 12.`;
+      container.querySelector('.mp-info').textContent = `${list.length} model(len). Minstens ${min}, hoogstens 12.`;
     };
     const add = () => {
       for (const m of input.value.split(/[,\s]+/).map((x) => x.trim()).filter(Boolean)) if (!list.includes(m)) list.push(m);

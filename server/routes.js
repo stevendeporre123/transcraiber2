@@ -14,7 +14,7 @@ import { saveSkillVersion, proposeSkillChange, skillDiff } from './services/skil
 import { meetingBlocks, agendaText, runTest, getTest, TEST_STEPS } from './services/testbench.js';
 import { startBatch, stopBatch, listBatches, getBatch, deleteBatch, MAX_MODELS } from './services/batch.js';
 import { parseBlocks, parseSpeakerHeader } from './services/blockfmt.js';
-import { scoreTest, judgeTest, PILLAR_WEIGHTS } from './services/quality.js';
+import { scoreTest, judgeTest, scoreRun, PILLAR_WEIGHTS } from './services/quality.js';
 import { prepareMeeting, stopPrepare, isPreparing, listSegments, loadBlocks as loadMeetingBlocks, setSegmentStart, addSegment, updateSegment, deleteSegment } from './services/prepare.js';
 import { POINT_TYPES } from './services/agenda-parse.js';
 import { buildSubtitles, subtitleSource, subtitleRuns, readSubtitleFile } from './services/subtitles.js';
@@ -606,6 +606,90 @@ api.post('/batches', (req, res) => {
     res.json({ id, maxModels: MAX_MODELS });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
+// ---------------- Nieuwe test: 3 bestanden + model(len) → vergadering, referentie, runs ----------------
+const newTestUpload = upload.fields([{ name: 'transcript', maxCount: 1 }, { name: 'subtitles', maxCount: 1 }, { name: 'gold', maxCount: 1 }]);
+const extOf = (f) => path.extname(f.originalname).toLowerCase().slice(1);
+
+api.post('/newtests', newTestUpload, async (req, res) => {
+  const files = { transcript: req.files?.transcript?.[0], subtitles: req.files?.subtitles?.[0], gold: req.files?.gold?.[0] };
+  const dropAll = () => Object.values(files).forEach((f) => f && fs.rm(f.path, { force: true }, () => {}));
+  const fail = (msg, code = 400) => { dropAll(); res.status(code).json({ error: msg }); };
+  if (!config.mockLlm && !apiKey()) return fail('Stel eerst een OpenRouter API-key in (Instellingen).');
+  if (!files.transcript) return fail('Laad het origineel (DOCX of PDF) op.');
+  if (!files.subtitles) return fail('Laad het origineel in SRT op.');
+  if (!files.gold) return fail('Laad het gewenste eindresultaat (PDF) op.');
+  if (!['docx', 'pdf'].includes(extOf(files.transcript))) return fail('Het origineel moet een .docx of .pdf zijn.');
+  if (!['srt', 'vtt'].includes(extOf(files.subtitles))) return fail('Het ondertitelbestand moet een .srt (of .vtt) zijn.');
+  if (!['pdf', 'docx', 'txt'].includes(extOf(files.gold))) return fail('Het gewenste eindresultaat moet een .pdf (of .docx/.txt) zijn.');
+  let models;
+  try { models = JSON.parse(req.body.models || '[]'); } catch { models = []; }
+  models = [...new Set((Array.isArray(models) ? models : []).map((m) => String(m || '').trim()).filter(Boolean))];
+  if (!models.length) return fail('Kies minstens één model.');
+  if (models.length > MAX_MODELS) return fail(`Maximaal ${MAX_MODELS} modellen.`);
+
+  // Bestanden eerst controleren, pas daarna iets aanmaken
+  let cues = 0;
+  try { cues = readSubtitleFile(files.subtitles.path).cues.length; } catch { cues = 0; }
+  if (!cues) return fail('Geen ondertitels (cues met tijdcodes) gevonden in het SRT-bestand.');
+  let gold;
+  try { gold = await readAgendaText(files.gold.path); } catch (e) { return fail(`Gewenst eindresultaat niet leesbaar: ${e.message}`); }
+  fs.rm(files.gold.path, { force: true }, () => {});
+  if (!gold || !gold.trim()) return fail('Geen tekst gevonden in het gewenste eindresultaat (gescande PDF zonder tekstlaag?).');
+
+  const soort = req.body.soort === 'verslag' ? 'verslag' : 'transcript';
+  const writer = soort === 'verslag' || req.body.writer === '1';
+  const tf = files.transcript;
+  const data = pick(req.body, meetingFields);
+  const created = db.transaction(() => {
+    const mid = db.prepare(`INSERT INTO meetings (titel, orgaan, commissie, voorzitter, datum, input_file, input_name, input_type, has_timecodes, agenda_status, subtitle_file, subtitle_name, subtitle_type)
+      VALUES (@titel, @orgaan, @commissie, @voorzitter, @datum, @file, @name, @type, 0, 'geen', @sf, @sn, @st)`)
+      .run({ titel: null, orgaan: 'gemeenteraad', commissie: null, voorzitter: null, datum: null, ...data, file: tf.path, name: tf.originalname, type: extOf(tf),
+        sf: files.subtitles.path, sn: files.subtitles.originalname, st: extOf(files.subtitles) }).lastInsertRowid;
+    const gid = db.prepare('INSERT INTO gold_refs (meeting_id, naam, soort, bron, text, notitie) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(mid, files.gold.originalname, soort, files.gold.originalname, gold, 'Nieuwe test').lastInsertRowid;
+    return { mid, gid };
+  })();
+  try {
+    const id = startBatch({
+      mode: 'pipeline', newTest: true, meetingId: created.mid, goldId: created.gid, models,
+      stopAfter: writer ? 'writer' : 'resolver', writer,
+      concurrency: Number(req.body.concurrency) || 2, label: req.body.label || data.titel || tf.originalname,
+    });
+    res.json({ id, meetingId: created.mid });
+  } catch (e) {
+    db.prepare('DELETE FROM meetings WHERE id = ?').run(created.mid);
+    fail(e.message);
+  }
+});
+
+api.get('/newtests', (req, res) => res.json(listBatches().filter((b) => b.options?.newTest)));
+api.get('/newtests/:id', (req, res) => {
+  const b = getBatch(Number(req.params.id));
+  if (!b || !b.options?.newTest) return notFound(res);
+  const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(b.meeting_id);
+  const gold = b.options.goldId ? db.prepare('SELECT id, naam, soort, length(text) AS chars FROM gold_refs WHERE id = ?').get(b.options.goldId) : null;
+  res.json({ ...b, meeting: m ? { id: m.id, titel: m.titel, orgaan: m.orgaan, commissie: m.commissie, datum: m.datum, input_name: m.input_name, subtitle_name: m.subtitle_name } : null, gold });
+});
+api.post('/runs/:id/score', (req, res) => {
+  try {
+    const r = scoreRun(Number(req.params.id));
+    r ? res.json(r) : res.status(400).json({ error: 'Deze run is (nog) niet klaar.' });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+// Verwijderen: de vergadering werd enkel voor deze test aangemaakt, dus die gaat mee
+api.delete('/newtests/:id', (req, res) => {
+  const b = getBatch(Number(req.params.id));
+  if (!b || !b.options?.newTest) return notFound(res);
+  try { deleteBatch(b.id); } catch (e) { return res.status(409).json({ error: e.message }); }
+  const m = b.meeting_id ? db.prepare('SELECT * FROM meetings WHERE id = ?').get(b.meeting_id) : null;
+  const shared = m && db.prepare('SELECT COUNT(*) n FROM runs WHERE meeting_id = ?').get(m.id).n > 0;
+  if (m && !shared) {
+    db.prepare('DELETE FROM meetings WHERE id = ?').run(m.id);
+    for (const f of [m.input_file, m.agenda_file, m.subtitle_file]) if (f) fs.rm(f, { force: true }, () => {});
+  }
+  res.json({ ok: true });
+});
+
 api.post('/batches/:id/stop', (req, res) => res.json({ ok: true, stopped: stopBatch(Number(req.params.id)) }));
 api.delete('/batches/:id', (req, res) => {
   try { deleteBatch(Number(req.params.id)); res.json({ ok: true }); } catch (e) { res.status(409).json({ error: e.message }); }

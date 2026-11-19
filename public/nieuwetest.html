@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nieuwe test · Transcraiber</title>
+  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="/vendor/datatables-bs5/css/dataTables.bootstrap5.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid">
+
+  <!-- Overzicht van alle tests -->
+  <div id="v-list" class="d-none">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <h1 class="h4 mb-0 me-auto">Nieuwe test <small class="text-body-secondary fs-6">origineel + SRT + gewenst eindresultaat, per model gemeten</small></h1>
+      <button class="btn btn-primary" id="v-new"><i class="bi bi-plus-lg"></i> Nieuwe test</button>
+    </div>
+    <p class="small text-body-secondary">Laad het origineel (DOCX of PDF), het originele SRT-bestand en het gewenste eindresultaat (PDF) op en kies een of meer modellen.
+      Elk model verwerkt de volledige transcriptie; daarna zie je per model tokens, kost, duur, de kwaliteitsscore t.o.v. het gewenste eindresultaat en download je de verbeterde SRT.</p>
+    <table id="v-tests" class="table table-sm table-hover w-100">
+      <thead><tr><th>#</th><th>Wanneer</th><th>Test</th><th>Modellen</th><th>Klaar</th><th>Beste score</th><th>Kost</th><th>Status</th><th></th></tr></thead>
+    </table>
+  </div>
+
+  <!-- Eén test: voortgang en resultaten -->
+  <div id="v-detail" class="d-none">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <a href="nieuwetest.html" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+      <h1 class="h4 mb-0 me-auto" id="d-title">Test</h1>
+      <span id="d-status"></span>
+      <span class="small text-body-secondary" id="d-elapsed"></span>
+      <button class="btn btn-sm btn-outline-warning d-none" id="d-stop"><i class="bi bi-stop-fill"></i> Stoppen</button>
+      <button class="btn btn-sm btn-outline-danger" id="d-delete"><i class="bi bi-trash"></i> Verwijderen</button>
+    </div>
+    <div class="small text-body-secondary mb-3" id="d-meta"></div>
+
+    <div id="d-progress" class="mb-3"></div>
+    <div class="row g-2 mb-3" id="d-best"></div>
+
+    <table id="d-rows" class="table table-sm table-hover w-100">
+      <thead><tr><th>Model</th><th>Status</th><th>Tokens in</th><th>Tokens uit</th><th>Kost</th><th>Duur</th><th title="Kwaliteitsscore 0-100 (A = automatisch, R = gelijkenis met het gewenste eindresultaat). Klik voor details.">Score</th><th></th></tr></thead>
+    </table>
+    <div class="small text-body-secondary">
+      <b>Duur</b> = van start tot einde van de run (wandklok); eronder de netto modeltijd (enkel de aanvaarde aanroepen).
+      <b>Score</b> = gewogen gemiddelde van R (gelijkenis in woorden en namen met het gewenste eindresultaat, weegt 4) en A (automatisch: structuur, trouw aan de bron, namen, sprekers, weegt 3).
+    </div>
+  </div>
+</div>
+
+<!-- Modal: nieuwe test -->
+<div class="modal fade" id="n-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <form class="modal-content" id="n-form">
+      <div class="modal-header"><h5 class="modal-title"><i class="bi bi-play-circle"></i> Nieuwe test</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <h6 class="text-body-secondary">1. Bestanden</h6>
+        <div class="row g-2 mb-3">
+          <div class="col-md-4"><label class="form-label">Origineel <small class="text-body-secondary">(DOCX of PDF)</small></label>
+            <input type="file" class="form-control" name="transcript" accept=".docx,.pdf" required></div>
+          <div class="col-md-4"><label class="form-label">Origineel in SRT</label>
+            <input type="file" class="form-control" name="subtitles" accept=".srt,.vtt" required></div>
+          <div class="col-md-4"><label class="form-label">Gewenst eindresultaat <small class="text-body-secondary">(PDF)</small></label>
+            <input type="file" class="form-control" name="gold" accept=".pdf,.docx,.txt" required></div>
+          <div class="col-md-6"><label class="form-label">Het gewenste eindresultaat is</label>
+            <select class="form-select" name="soort" id="n-soort">
+              <option value="transcript" selected>de letterlijke, opgeschoonde transcriptie</option>
+              <option value="verslag">een verslag (samenvatting per punt)</option>
+            </select></div>
+          <div class="col-md-6 d-flex align-items-end">
+            <div class="form-check mb-2" id="n-writer-wrap"><input class="form-check-input" type="checkbox" name="writer" id="n-writer">
+              <label class="form-check-label" for="n-writer">Ook het verslag laten schrijven (extra kost)</label></div>
+          </div>
+        </div>
+
+        <h6 class="text-body-secondary">2. Vergadering <small class="fw-normal">(context voor de skills, optioneel)</small></h6>
+        <div class="row g-2 mb-3">
+          <div class="col-md-5"><label class="form-label">Titel</label><input class="form-control" name="titel" placeholder="standaard: bestandsnaam"></div>
+          <div class="col-md-3"><label class="form-label">Orgaan</label>
+            <select class="form-select" name="orgaan" id="n-orgaan"><option value="gemeenteraad">gemeenteraad</option><option value="commissie">commissie</option></select></div>
+          <div class="col-md-2"><label class="form-label">Commissie</label><input class="form-control" name="commissie" id="n-commissie" placeholder="bv. FIERI" disabled></div>
+          <div class="col-md-2"><label class="form-label">Datum</label><input type="date" class="form-control" name="datum"></div>
+        </div>
+
+        <h6 class="text-body-secondary">3. Model(len)</h6>
+        <div id="n-models"></div>
+        <div class="row g-2 mt-1">
+          <div class="col-md-3"><label class="form-label">Tegelijk</label>
+            <select class="form-select" name="concurrency"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
+          <div class="col-md-9 small text-body-secondary d-flex align-items-end">Elk model doet alle stappen (normaliseren, opschonen, sprekers) op exact dezelfde invoer.
+            Meerdere modellen worden naast elkaar gezet.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <span class="small text-body-secondary me-auto" id="n-info"></span>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+        <button type="submit" class="btn btn-primary" id="n-submit"><i class="bi bi-play-fill"></i> Starten</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: detail van de score -->
+<div class="modal fade" id="s-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="s-title">Kwaliteitsscore</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body" id="s-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary me-auto" id="s-rescore"><i class="bi bi-arrow-repeat"></i> Opnieuw berekenen</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sluiten</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/vendor/datatables/dataTables.min.js"></script>
+<script src="/vendor/datatables-bs5/js/dataTables.bootstrap5.min.js"></script>
+<script src="js/common.js"></script>
+<script src="js/nieuwetest.js"></script>
+</body>
+</html>

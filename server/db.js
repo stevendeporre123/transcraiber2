@@ -274,6 +274,9 @@ addColumn('meetings', 'prep_progress', 'TEXT');
 addColumn('meetings', 'agenda_format', 'TEXT');
 addColumn('skills', 'seed_content', 'TEXT');
 addColumn('members', 'varianten', 'TEXT'); // STT-vervormingen van de naam, komma-gescheiden
+addColumn('meetings', 'subtitle_file', 'TEXT'); // apart opgeladen originele SRT/VTT (voor de verbeterde ondertitels)
+addColumn('meetings', 'subtitle_name', 'TEXT');
+addColumn('meetings', 'subtitle_type', 'TEXT');
 addColumn('streets', 'varianten', 'TEXT'); // STT-vervormingen van de straatnaam
 // Kwaliteitsscore per test (Testbank): eindscore 0-100 + deelscores en details (JSON)
 addColumn('test_runs', 'quality', 'REAL');

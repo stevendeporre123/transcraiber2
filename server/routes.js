@@ -15,6 +15,7 @@ import { meetingBlocks, agendaText, runTest, getTest, TEST_STEPS } from './servi
 import { scoreTest, judgeTest, PILLAR_WEIGHTS } from './services/quality.js';
 import { prepareMeeting, stopPrepare, isPreparing, listSegments, loadBlocks as loadMeetingBlocks, setSegmentStart, addSegment, updateSegment, deleteSegment } from './services/prepare.js';
 import { POINT_TYPES } from './services/agenda-parse.js';
+import { buildSubtitles, subtitleSource, subtitleRuns, readSubtitleFile } from './services/subtitles.js';
 import { renderLeden, renderBevoegdheden, renderTerminologie, invalidateStreets, TERM_CATEGORIES, REF_KEYS } from './services/context.js';
 
 export const api = express.Router();
@@ -243,7 +244,7 @@ api.delete('/meetings/:id', (req, res) => {
   if (!m) return notFound(res);
   if ([...db.prepare('SELECT id FROM runs WHERE meeting_id = ?').all(m.id)].some((r) => isActive(r.id)) || isPreparing(m.id)) return res.status(409).json({ error: 'Er loopt nog een verwerking of voorbereiding.' });
   db.prepare('DELETE FROM meetings WHERE id = ?').run(m.id);
-  for (const f of [m.input_file, m.agenda_file]) if (f) fs.rm(f, { force: true }, () => {});
+  for (const f of [m.input_file, m.agenda_file, m.subtitle_file]) if (f) fs.rm(f, { force: true }, () => {});
   res.json({ ok: true });
 });
 
@@ -317,6 +318,58 @@ api.put('/segments/:id', (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 api.delete('/segments/:id', (req, res) => { deleteSegment(Number(req.params.id)); res.json({ ok: true }); });
+
+// ---------------- Verbeterde ondertitels (volledige SRT/VTT met de tekst van alle runs) ----------------
+const subtitleInfo = (m) => {
+  const src = subtitleSource(m);
+  let cues = null;
+  if (src) try { cues = readSubtitleFile(src.file).cues.length; } catch { cues = 0; }
+  return { source: src ? { name: src.name, type: src.type, uploaded: src.uploaded, cues } : null, runs: subtitleRuns(m.id) };
+};
+const subtitleOpts = (q) => ({
+  runIds: q.runs != null ? String(q.runs).split(',').map(Number).filter(Boolean) : undefined,
+  format: ['srt', 'vtt'].includes(q.format) ? q.format : undefined,
+  speakers: q.speakers !== '0',
+});
+api.get('/meetings/:id/subtitles', (req, res) => {
+  const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(req.params.id);
+  if (!m) return notFound(res);
+  res.json(subtitleInfo(m));
+});
+api.post('/meetings/:id/subtitles', upload.single('subtitles'), (req, res) => {
+  const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(req.params.id);
+  const drop = () => req.file && fs.rm(req.file.path, { force: true }, () => {});
+  if (!m) { drop(); return notFound(res); }
+  if (!req.file) return res.status(400).json({ error: 'Geen bestand opgeladen.' });
+  const type = path.extname(req.file.originalname).toLowerCase().slice(1);
+  if (!['srt', 'vtt'].includes(type)) { drop(); return res.status(400).json({ error: 'Enkel .srt of .vtt.' }); }
+  let cues = 0;
+  try { cues = readSubtitleFile(req.file.path).cues.length; } catch { cues = 0; }
+  if (!cues) { drop(); return res.status(400).json({ error: 'Geen ondertitels (cues met tijdcodes) gevonden in dit bestand.' }); }
+  if (m.subtitle_file) fs.rm(m.subtitle_file, { force: true }, () => {});
+  db.prepare('UPDATE meetings SET subtitle_file = ?, subtitle_name = ?, subtitle_type = ? WHERE id = ?').run(req.file.path, req.file.originalname, type, m.id);
+  res.json(subtitleInfo(db.prepare('SELECT * FROM meetings WHERE id = ?').get(m.id)));
+});
+api.delete('/meetings/:id/subtitles', (req, res) => {
+  const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(req.params.id);
+  if (!m) return notFound(res);
+  if (m.subtitle_file) fs.rm(m.subtitle_file, { force: true }, () => {});
+  db.prepare('UPDATE meetings SET subtitle_file = NULL, subtitle_name = NULL, subtitle_type = NULL WHERE id = ?').run(m.id);
+  res.json(subtitleInfo(db.prepare('SELECT * FROM meetings WHERE id = ?').get(m.id)));
+});
+api.get('/meetings/:id/subtitles/preview', (req, res) => {
+  try { res.json(buildSubtitles(Number(req.params.id), subtitleOpts(req.query)).stats); } catch (e) { res.status(400).json({ error: e.message }); }
+});
+api.get('/meetings/:id/subtitles/download', (req, res) => {
+  const m = db.prepare('SELECT * FROM meetings WHERE id = ?').get(req.params.id);
+  if (!m) return notFound(res);
+  try {
+    const r = buildSubtitles(m.id, subtitleOpts(req.query));
+    const src = subtitleSource(m);
+    const base = path.basename(src.name, path.extname(src.name)).replace(/[^\p{L}\p{N} _-]+/gu, '').trim().replace(/\s+/g, '_') || `vergadering-${m.id}`;
+    res.type(r.format === 'vtt' ? 'text/vtt' : 'application/x-subrip').attachment(`${base}-verbeterd.${r.format}`).send(r.content);
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
 
 // ---------------- Runs ----------------
 api.get('/runs', (req, res) => {

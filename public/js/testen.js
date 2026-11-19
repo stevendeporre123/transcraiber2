@@ -225,6 +225,42 @@ async function run() {
   }
 }
 
+// ---------- modelvergelijking ----------
+let comparePicker = null;
+function openCompare() {
+  const step = $id('t-step').value;
+  const input = $id('t-input').value;
+  if (!input.trim()) { App.toast('Laad eerst invoer (blokken of eigen tekst).', 'warning'); return; }
+  const models = [...document.querySelectorAll('.t-model')].map((i) => i.value.trim()).filter(Boolean);
+  if (!comparePicker) comparePicker = App.modelPicker($id('c-models'), models);
+  else if (models.length) comparePicker.set([...new Set([...comparePicker.get(), ...models])]);
+  $id('c-skill').textContent = SKILL_OF[step] || step;
+  const m = $id('t-meeting');
+  $id('c-input-info').textContent = `Invoer: ${m.value ? m.options[m.selectedIndex].text : 'eigen tekst'} · ${words(input)} woorden${$id('t-from').value && m.value ? ` · blokken ${$id('t-from').value}–${$id('t-to').value}` : ''}`;
+  $id('c-label').value = $id('t-label').value;
+  App.modal('c-modal').show();
+}
+
+async function startCompare(e) {
+  e.preventDefault();
+  const models = comparePicker.get();
+  if (models.length < 2) { App.toast('Kies minstens twee modellen.', 'warning'); return; }
+  const m = $id('t-meeting');
+  const input = $id('t-input').value;
+  const blocks = (input.match(/^##\s*B\d+/gm) || []).length;
+  const inputDesc = [m.value && $id('t-from').value ? `blokken ${$id('t-from').value}–${$id('t-to').value}` : null, blocks ? `${blocks} blokken` : null, `${words(input)} woorden`].filter(Boolean).join(', ');
+  try {
+    const { id } = await App.api('/batches', {
+      method: 'POST',
+      body: {
+        mode: 'step', step: $id('t-step').value, input, models, skillContent: $id('t-skill').value, refs: currentRefs(),
+        meetingId: m.value || null, segmentId, label: $id('c-label').value, inputDesc, concurrency: Number(e.target.concurrency.value) || 3,
+      },
+    });
+    location.href = `modellen.html?id=${id}`;
+  } catch (err) { App.error(err); }
+}
+
 async function loadHistory() {
   history.clear().rows.add(await App.api('/test/runs')).draw(false);
 }
@@ -262,6 +298,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) { App.error(e); }
   };
   $id('t-run').onclick = run;
+  $id('t-compare').onclick = openCompare;
+  $id('c-form').onsubmit = startCompare;
 
   $('#t-results').on('change', '.t-showall', (e) => {
     document.querySelectorAll(`.t-blocks[data-key="${e.target.dataset.key}"] .t-b-gelijk`).forEach((el) => { el.hidden = !e.target.checked; });
@@ -307,4 +345,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (q.get('step')) $id('t-step').value = q.get('step');
   await loadSkill();
   if (q.get('meeting')) { $id('t-meeting').value = q.get('meeting'); await loadMeeting(); }
+  if (q.get('test')) {
+    // Resultaat van één test openen (bv. vanuit de modelvergelijking)
+    try {
+      const t = await App.api(`/test/runs/${q.get('test')}`);
+      showResults([{ ...t, user: t.input }]);
+      document.getElementById('t-results').scrollIntoView({ behavior: 'smooth' });
+    } catch (e) { App.error(e); }
+  }
 });

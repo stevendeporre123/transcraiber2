@@ -239,6 +239,21 @@ CREATE TABLE IF NOT EXISTS meeting_segments (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Modelvergelijking: dezelfde invoer met meerdere modellen (stap via test_runs, pipeline via runs)
+CREATE TABLE IF NOT EXISTS model_batches (
+  id INTEGER PRIMARY KEY,
+  mode TEXT NOT NULL,          -- step (Testbank-stap) of pipeline (volledige run)
+  step TEXT,                   -- mode step: de geteste stap; mode pipeline: stoppen na
+  meeting_id INTEGER REFERENCES meetings(id) ON DELETE SET NULL,
+  label TEXT,
+  input_desc TEXT,             -- leesbare omschrijving van de invoer
+  models TEXT NOT NULL,        -- JSON array
+  options TEXT,                -- JSON
+  status TEXT NOT NULL DEFAULT 'bezig',  -- bezig, klaar, gestopt, onderbroken
+  created_at TEXT DEFAULT (datetime('now')),
+  finished_at TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_terms_cat ON terms(categorie);
 CREATE INDEX IF NOT EXISTS idx_points_meeting ON meeting_points(meeting_id, ord);
 CREATE INDEX IF NOT EXISTS idx_segments_meeting ON meeting_segments(meeting_id, start_ord);
@@ -262,7 +277,14 @@ addColumn('meetings', 'prep_progress', 'TEXT');
 addColumn('meetings', 'agenda_format', 'TEXT');
 addColumn('skills', 'seed_content', 'TEXT');
 addColumn('members', 'varianten', 'TEXT'); // STT-vervormingen van de naam, komma-gescheiden
-addColumn('streets', 'varianten', 'TEXT'); // STT-vervormingen van de straatnaam // meegeleverde tekst (om updates te kunnen uitrollen)
+addColumn('streets', 'varianten', 'TEXT');
+// Modelvergelijking: netto duur (enkel de aanvaarde aanroep, zonder herpogingen) en aantal herpogingen
+addColumn('run_steps', 'ms_net', 'INTEGER');
+addColumn('run_steps', 'http_retries', 'INTEGER');
+addColumn('test_runs', 'ms_net', 'INTEGER');
+addColumn('test_runs', 'http_retries', 'INTEGER');
+addColumn('test_runs', 'batch_id', 'INTEGER');
+addColumn('runs', 'batch_id', 'INTEGER'); // STT-vervormingen van de straatnaam // meegeleverde tekst (om updates te kunnen uitrollen)
 
 export function getSetting(key, fallback = null) {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);

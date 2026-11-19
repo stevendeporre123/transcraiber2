@@ -93,12 +93,15 @@ async function callStep(ctx, step, chunk, { user, refText, isJson = false, valid
     if (logInput) {
       try { L('info', 'analyse uitvoer', logSummary(analyzeOutput(step, logInput, res.text))); } catch (e) { L('warn', `analyse mislukt: ${e.message}`); }
     }
-    const save = (status, warnings) => db.prepare(`INSERT INTO run_steps (run_id, step, chunk, model, system, input, output, tokens_in, tokens_out, cost, ms, status, warnings, attempts)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    // ms telt alle pogingen op; ms_net is enkel de laatste (aanvaarde) aanroep, zonder herpogingen
+    const save = (status, warnings) => db.prepare(`INSERT INTO run_steps (run_id, step, chunk, model, system, input, output, tokens_in, tokens_out, cost, ms, status, warnings, attempts, ms_net, http_retries)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(run_id, step, chunk) DO UPDATE SET model=excluded.model, system=excluded.system, input=excluded.input, output=excluded.output,
         tokens_in=run_steps.tokens_in+excluded.tokens_in, tokens_out=run_steps.tokens_out+excluded.tokens_out, cost=run_steps.cost+excluded.cost,
-        ms=run_steps.ms+excluded.ms, status=excluded.status, warnings=excluded.warnings, attempts=excluded.attempts`)
-      .run(run.id, step, chunk, res.model, system, prompt, res.text, res.tokensIn, res.tokensOut, res.cost, res.ms, status, JSON.stringify(warnings || []), attempt + 1);
+        ms=run_steps.ms+excluded.ms, status=excluded.status, warnings=excluded.warnings, attempts=excluded.attempts,
+        ms_net=excluded.ms_net, http_retries=COALESCE(run_steps.http_retries, 0)+excluded.http_retries`)
+      .run(run.id, step, chunk, res.model, system, prompt, res.text, res.tokensIn, res.tokensOut, res.cost, res.ms, status, JSON.stringify(warnings || []), attempt + 1,
+        res.msNet ?? res.ms, Math.max(0, (res.httpAttempts || 1) - 1));
     try {
       if (res.finishReason === 'length') throw new Error('Antwoord afgekapt (max tokens bereikt)');
       const { value, warnings } = validate(res.text);

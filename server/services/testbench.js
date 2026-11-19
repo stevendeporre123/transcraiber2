@@ -86,10 +86,10 @@ function pipelineValidation(step, inputBlocks, output) {
 }
 
 /**
- * opts: { step, input, models: [..], skillContent?, refs?, meetingId?, label? }
- * Geeft per model { id, model, output, analysis, validation, tokens, cost, ms, error }.
+ * Bereidt een test voor (skill, prompt, invoerblokken), los van het model.
+ * opts: { step, input, skillContent?, refs?, meetingId?, segmentId? }
  */
-export async function runTest({ step, input, models, skillContent, refs, meetingId, label, segmentId }) {
+export function prepareTest({ step, input, skillContent, refs, meetingId, segmentId }) {
   if (!TEST_STEPS.includes(step)) throw new Error(`Onbekende stap ${step}`);
   if (!String(input || '').trim()) throw new Error('Geen invoer');
   const skill = db.prepare('SELECT * FROM skills WHERE naam = ?').get(STEPS[step].skill);
@@ -111,32 +111,49 @@ export async function runTest({ step, input, models, skillContent, refs, meeting
     points = ids.map((id) => db.prepare('SELECT * FROM meeting_points WHERE id = ?').get(id)).filter(Boolean);
   }
   const { system, refs: refInfo, skillChars } = buildPrompt(used, { meeting, text: user, points });
-  const list = (models?.length ? models : [defaultModel(step)]).filter(Boolean).slice(0, 4);
-  const isJson = step === 'writer' || step === 'agenda';
+  return { step, skill, draft, user, inputBlocks, system, refInfo, skillChars, isJson: step === 'writer' || step === 'agenda', meetingId: meetingId || null };
+}
 
-  return Promise.all(list.map(async (model) => {
-    const row = db.prepare(`INSERT INTO test_runs (meeting_id, step, model, skill_version, skill_draft, label, input, system)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(meetingId || null, step, model, skill.version, draft ? 1 : 0, label || null, user, system);
-    const testId = row.lastInsertRowid;
-    const L = (level, message, data) => log({ testId, level, step, message, data });
-    L('info', `test ${skill.naam} v${skill.version}${draft ? ' (concept)' : ''} met ${model}`, {
-      invoer_blokken: inputBlocks.length, invoer_tekens: user.length, systeemprompt_tekens: system.length, skill_tekens: skillChars,
-      referenties: refInfo.map((r) => `${r.ref}: ${r.included ? `${r.chars} tekens` : 'NIET meegestuurd'}${r.note ? ` (${r.note})` : ''}`),
-    });
-    try {
-      const res = await complete({ model, system, user, json: isJson });
-      const analysis = BLOCK_STEPS.includes(step) || step === 'resolver' || isJson ? analyzeOutput(step, inputBlocks, res.text) : null;
-      const validation = pipelineValidation(step, inputBlocks, res.text);
-      db.prepare('UPDATE test_runs SET model = ?, output = ?, analysis = ?, tokens_in = ?, tokens_out = ?, cost = ?, ms = ? WHERE id = ?')
-        .run(res.model || model, res.text, JSON.stringify({ analysis, validation, refs: refInfo, finishReason: res.finishReason }), res.tokensIn, res.tokensOut, res.cost, res.ms, testId);
-      L('info', `antwoord in ${(res.ms / 1000).toFixed(1)} s, ${res.tokensIn}/${res.tokensOut} tokens, $${(res.cost || 0).toFixed(4)}`, analysis ? logSummary(analysis) : undefined);
-      return { id: testId, model: res.model || model, requested: model, output: res.text, analysis, validation, refs: refInfo, finishReason: res.finishReason, tokens_in: res.tokensIn, tokens_out: res.tokensOut, cost: res.cost, ms: res.ms, system, user };
-    } catch (e) {
-      db.prepare('UPDATE test_runs SET error = ? WHERE id = ?').run(e.message, testId);
-      L('error', e.message);
-      return { id: testId, model, requested: model, error: e.message, refs: refInfo, system, user };
-    }
-  }));
+/** Maakt de test_runs-rij aan (vóór de aanroep, zodat een lopende vergelijking zichtbaar is). */
+export function insertTestRow(prep, model, { label, batchId } = {}) {
+  return db.prepare(`INSERT INTO test_runs (meeting_id, step, model, skill_version, skill_draft, label, input, system, batch_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(prep.meetingId, prep.step, model, prep.skill.version, prep.draft ? 1 : 0, label || null, prep.user, prep.system, batchId || null).lastInsertRowid;
+}
+
+/** Voert een voorbereide test uit met één model en bewaart het resultaat in test_runs. */
+export async function runTestModel(prep, model, { label, batchId, testId, signal } = {}) {
+  const { step, skill, draft, user, inputBlocks, system, refInfo, skillChars, isJson } = prep;
+  testId = testId || insertTestRow(prep, model, { label, batchId });
+  const L = (level, message, data) => log({ testId, level, step, message, data });
+  L('info', `test ${skill.naam} v${skill.version}${draft ? ' (concept)' : ''} met ${model}`, {
+    invoer_blokken: inputBlocks.length, invoer_tekens: user.length, systeemprompt_tekens: system.length, skill_tekens: skillChars,
+    referenties: refInfo.map((r) => `${r.ref}: ${r.included ? `${r.chars} tekens` : 'NIET meegestuurd'}${r.note ? ` (${r.note})` : ''}`),
+  });
+  try {
+    const res = await complete({ model, system, user, json: isJson, signal });
+    const analysis = BLOCK_STEPS.includes(step) || step === 'resolver' || isJson ? analyzeOutput(step, inputBlocks, res.text) : null;
+    const validation = pipelineValidation(step, inputBlocks, res.text);
+    const msNet = res.msNet ?? res.ms;
+    const httpRetries = Math.max(0, (res.httpAttempts || 1) - 1);
+    db.prepare('UPDATE test_runs SET model = ?, output = ?, analysis = ?, tokens_in = ?, tokens_out = ?, cost = ?, ms = ?, ms_net = ?, http_retries = ? WHERE id = ?')
+      .run(res.model || model, res.text, JSON.stringify({ analysis, validation, refs: refInfo, finishReason: res.finishReason }), res.tokensIn, res.tokensOut, res.cost, res.ms, msNet, httpRetries, testId);
+    L('info', `antwoord in ${(res.ms / 1000).toFixed(1)} s${httpRetries ? ` (${httpRetries} herpoging(en), netto ${(msNet / 1000).toFixed(1)} s)` : ''}, ${res.tokensIn}/${res.tokensOut} tokens, $${(res.cost || 0).toFixed(4)}`, analysis ? logSummary(analysis) : undefined);
+    return { id: testId, model: res.model || model, requested: model, output: res.text, analysis, validation, refs: refInfo, finishReason: res.finishReason, tokens_in: res.tokensIn, tokens_out: res.tokensOut, cost: res.cost, ms: res.ms, ms_net: msNet, http_retries: httpRetries, system, user };
+  } catch (e) {
+    db.prepare('UPDATE test_runs SET error = ? WHERE id = ?').run(e.message, testId);
+    L('error', e.message);
+    return { id: testId, model, requested: model, error: e.message, refs: refInfo, system, user };
+  }
+}
+
+/**
+ * opts: { step, input, models: [..], skillContent?, refs?, meetingId?, label?, segmentId? }
+ * Geeft per model { id, model, output, analysis, validation, tokens, cost, ms, error }.
+ */
+export async function runTest({ models, label, ...opts }) {
+  const prep = prepareTest(opts);
+  const list = (models?.length ? models : [defaultModel(opts.step)]).filter(Boolean).slice(0, 4);
+  return Promise.all(list.map((model) => runTestModel(prep, model, { label })));
 }
 
 export function getTest(id) {

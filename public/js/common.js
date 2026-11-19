@@ -4,6 +4,7 @@
 const NAV = [
   ['index.html', 'bi-file-earmark-text', 'Transcripties'],
   ['testen.html', 'bi-eyedropper', 'Testbank'],
+  ['modellen.html', 'bi-bar-chart-line', 'Modelvergelijking'],
   ['skills.html', 'bi-magic', 'Skills'],
   ['leden.html', 'bi-people', 'Raadsleden'],
   ['termen.html', 'bi-journal-text', 'Gentse context'],
@@ -118,6 +119,50 @@ const App = {
       dl.innerHTML = models.map((m) => `<option value="${App.esc(m.id)}">${App.esc(m.name)} — $${m.prompt.toFixed(2)}/$${m.completion.toFixed(2)} per M, ${Math.round((m.context || 0) / 1000)}k</option>`).join('');
     } catch { /* offline: vrije invoer */ }
   },
+
+  /**
+   * Lijst van modellen kiezen (voor modelvergelijkingen): invoerveld met OpenRouter-datalist,
+   * toevoegen met Enter of de knop, verwijderen per model. Geeft { get(), set(list) }.
+   */
+  modelPicker(container, initial = []) {
+    App.modelDatalist();
+    let list = [];
+    container.innerHTML = `<div class="input-group input-group-sm mb-2">
+        <input class="form-control mp-input" list="models-list" placeholder="bv. google/gemini-2.5-flash, anthropic/claude-sonnet-4.5 …">
+        <button type="button" class="btn btn-outline-primary mp-add"><i class="bi bi-plus-lg"></i> Toevoegen</button>
+      </div>
+      <ul class="list-group list-group-sm mp-list small"></ul>
+      <div class="form-text mp-info"></div>`;
+    const input = container.querySelector('.mp-input');
+    const ul = container.querySelector('.mp-list');
+    const render = () => {
+      ul.innerHTML = list.map((m, i) => `<li class="list-group-item d-flex align-items-center py-1">
+        <span class="badge text-bg-secondary me-2">${i + 1}</span><code class="me-auto">${App.esc(m)}</code>
+        <button type="button" class="btn btn-sm btn-link text-danger p-0 mp-del" data-i="${i}" title="Verwijderen"><i class="bi bi-x-lg"></i></button></li>`).join('')
+        || '<li class="list-group-item text-body-secondary py-1">Nog geen modellen gekozen</li>';
+      container.querySelector('.mp-info').textContent = `${list.length} model(len). Minstens 2, hoogstens 12.`;
+    };
+    const add = () => {
+      for (const m of input.value.split(/[,\s]+/).map((x) => x.trim()).filter(Boolean)) if (!list.includes(m)) list.push(m);
+      input.value = '';
+      render();
+      input.focus();
+    };
+    container.querySelector('.mp-add').onclick = add;
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+    ul.addEventListener('click', (e) => {
+      const b = e.target.closest('.mp-del');
+      if (b) { list.splice(Number(b.dataset.i), 1); render(); }
+    });
+    const api = {
+      get: () => { if (input.value.trim()) add(); return [...list]; },
+      set: (l) => { list = [...new Set((l || []).filter(Boolean))]; render(); },
+    };
+    api.set(initial);
+    return api;
+  },
+
+  fmtMs(ms) { return ms == null ? '' : ms < 1000 ? `${ms} ms` : ms < 120000 ? `${(ms / 1000).toFixed(1)} s` : `${Math.floor(ms / 60000)} min ${Math.round((ms % 60000) / 1000)} s`; },
 
   async loadMeta() {
     App.meta = await App.api('/meta');
@@ -266,7 +311,8 @@ const App = {
     const items = NAV.map(([href, icon, label]) => {
       const badge = href === 'termen.html' ? '<span id="nav-badge-terms" class="badge rounded-pill text-bg-warning ms-1"></span>'
         : href === 'skills.html' ? '<span id="nav-badge-skills" class="badge rounded-pill text-bg-info ms-1" title="Onverwerkte correcties"></span>' : '';
-      const active = page === href || (['run.html', 'vergelijk.html', 'vergadering.html'].includes(page) && href === 'index.html');
+      const testCompare = page === 'vergelijk.html' && new URLSearchParams(location.search).has('ta');
+      const active = page === href || (testCompare ? href === 'modellen.html' : ['run.html', 'vergelijk.html', 'vergadering.html'].includes(page) && href === 'index.html');
       return `<li class="nav-item"><a class="nav-link ${active ? 'active' : ''}" href="${href}"><i class="bi ${icon}"></i> ${label}${badge}</a></li>`;
     }).join('');
     const nav = document.createElement('nav');

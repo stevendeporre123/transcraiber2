@@ -75,6 +75,7 @@
           </details>
           <div class="d-flex align-items-center gap-2 mt-3">
             <button class="btn btn-primary" id="t-run"><i class="bi bi-play-fill"></i> Test uitvoeren</button>
+            <button class="btn btn-outline-primary" id="t-compare" title="Dezelfde invoer en skilltekst met meerdere modellen, met een overzicht van tokens, kost en duur"><i class="bi bi-bar-chart-line"></i> Vergelijk modellen…</button>
             <span class="small text-body-secondary" id="t-run-info"></span>
           </div>
         </div>
@@ -89,6 +90,30 @@
   <table id="t-history" class="table table-sm table-hover w-100">
     <thead><tr><th>#</th><th>Wanneer</th><th>Skill</th><th>Model</th><th>Versie</th><th>Label</th><th>Invoer</th><th>Tokens</th><th>Kost</th><th>Tijd</th><th></th></tr></thead>
   </table>
+</div>
+
+<!-- Modal: modelvergelijking voor deze stap -->
+<div class="modal fade" id="c-modal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form class="modal-content" id="c-form">
+      <div class="modal-header"><h5 class="modal-title">Modellen vergelijken: <span id="c-skill"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <p class="small text-body-secondary mb-2" id="c-input-info"></p>
+        <div class="row g-2">
+          <div class="col-md-9"><label class="form-label">Label (optioneel)</label><input class="form-control" name="label" id="c-label"></div>
+          <div class="col-md-3"><label class="form-label">Tegelijk</label>
+            <select class="form-select" name="concurrency"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>6</option></select></div>
+          <div class="col-12"><label class="form-label">Modellen</label><div id="c-models"></div></div>
+        </div>
+        <div class="form-text">Elk model krijgt exact dezelfde invoer, skilltekst (ook een niet-opgeslagen concept) en referenties.
+          De resultaten komen in het overzicht op de pagina <a href="modellen.html">Modelvergelijking</a>.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-play-fill"></i> Vergelijking starten</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script src="/vendor/jquery/jquery.min.js"></script>

@@ -10,6 +10,7 @@ import { analyzeOutput, logSummary, BLOCK_STEPS } from './analyze.js';
 import { validateNormalizer, validateCleaner } from './pipeline.js';
 import { log } from './logger.js';
 import { listSegments } from './prepare.js';
+import { scoreTest, judgeTest, defaultGold } from './quality.js';
 
 export const TEST_STEPS = ['normalizer', 'cleaner', 'resolver', 'writer', 'intake', 'agenda'];
 
@@ -86,10 +87,11 @@ function pipelineValidation(step, inputBlocks, output) {
 }
 
 /**
- * opts: { step, input, models: [..], skillContent?, refs?, meetingId?, label? }
- * Geeft per model { id, model, output, analysis, validation, tokens, cost, ms, error }.
+ * opts: { step, input, models: [..], skillContent?, refs?, meetingId?, label?, goldId?, judge?, judgeModel? }
+ * Geeft per model { id, model, output, analysis, validation, quality, tokens, cost, ms, error }.
+ * goldId: geverifieerd eindresultaat om mee te vergelijken (undefined = standaard van de vergadering, null = geen).
  */
-export async function runTest({ step, input, models, skillContent, refs, meetingId, label, segmentId }) {
+export async function runTest({ step, input, models, skillContent, refs, meetingId, label, segmentId, goldId, judge, judgeModel }) {
   if (!TEST_STEPS.includes(step)) throw new Error(`Onbekende stap ${step}`);
   if (!String(input || '').trim()) throw new Error('Geen invoer');
   const skill = db.prepare('SELECT * FROM skills WHERE naam = ?').get(STEPS[step].skill);
@@ -113,6 +115,7 @@ export async function runTest({ step, input, models, skillContent, refs, meeting
   const { system, refs: refInfo, skillChars } = buildPrompt(used, { meeting, text: user, points });
   const list = (models?.length ? models : [defaultModel(step)]).filter(Boolean).slice(0, 4);
   const isJson = step === 'writer' || step === 'agenda';
+  const gold = goldId === undefined ? defaultGold(meetingId) : goldId;
 
   return Promise.all(list.map(async (model) => {
     const row = db.prepare(`INSERT INTO test_runs (meeting_id, step, model, skill_version, skill_draft, label, input, system)
@@ -130,7 +133,17 @@ export async function runTest({ step, input, models, skillContent, refs, meeting
       db.prepare('UPDATE test_runs SET model = ?, output = ?, analysis = ?, tokens_in = ?, tokens_out = ?, cost = ?, ms = ? WHERE id = ?')
         .run(res.model || model, res.text, JSON.stringify({ analysis, validation, refs: refInfo, finishReason: res.finishReason }), res.tokensIn, res.tokensOut, res.cost, res.ms, testId);
       L('info', `antwoord in ${(res.ms / 1000).toFixed(1)} s, ${res.tokensIn}/${res.tokensOut} tokens, $${(res.cost || 0).toFixed(4)}`, analysis ? logSummary(analysis) : undefined);
-      return { id: testId, model: res.model || model, requested: model, output: res.text, analysis, validation, refs: refInfo, finishReason: res.finishReason, tokens_in: res.tokensIn, tokens_out: res.tokensOut, cost: res.cost, ms: res.ms, system, user };
+      let quality = null;
+      try {
+        quality = scoreTest(testId, { goldId: gold });
+        if (judge) {
+          try { quality = { ...quality, ...(await judgeTest(testId, { model: judgeModel || undefined })) }; } catch (e) {
+            L('warn', `beoordeling door rechtermodel mislukt: ${e.message}`);
+            quality = { ...quality, judgeError: e.message };
+          }
+        }
+      } catch (e) { L('warn', `kwaliteitsscore mislukt: ${e.message}`); }
+      return { id: testId, ...qualityFields(quality), model: res.model || model, requested: model, output: res.text, analysis, validation, refs: refInfo, finishReason: res.finishReason, tokens_in: res.tokensIn, tokens_out: res.tokensOut, cost: res.cost, ms: res.ms, system, user };
     } catch (e) {
       db.prepare('UPDATE test_runs SET error = ? WHERE id = ?').run(e.message, testId);
       L('error', e.message);
@@ -139,9 +152,14 @@ export async function runTest({ step, input, models, skillContent, refs, meeting
   }));
 }
 
+function qualityFields(q) {
+  if (!q) return {};
+  return { quality: q.quality, quality_auto: q.quality_auto, quality_gold: q.quality_gold, quality_judge: q.quality_judge, quality_detail: q.detail, judge_error: q.judgeError };
+}
+
 export function getTest(id) {
   const t = db.prepare('SELECT * FROM test_runs WHERE id = ?').get(id);
   if (!t) return null;
   const a = json(t.analysis, {}) || {};
-  return { ...t, analysis: a.analysis || null, validation: a.validation || null, refs: a.refs || [], finishReason: a.finishReason };
+  return { ...t, analysis: a.analysis || null, validation: a.validation || null, refs: a.refs || [], finishReason: a.finishReason, quality_detail: json(t.quality_detail, null) };
 }

@@ -68,6 +68,8 @@ export function mockCompletion({ system, user }) {
       const cur = (user.match(/<<<SKILL\n([\s\S]*?)\nSKILL>>>/) || [])[1] || '';
       return JSON.stringify({ content: `${cur.trimEnd()}\n\n<!-- mock-aanpassing -->\n`, samenvatting: 'Mock: commentaarregel toegevoegd.', termen: [] });
     }
+    case 'kwaliteitsrechter':
+      return JSON.stringify({ scores: { namen: 4, terminologie: 5, trouw: 5, opschoning: 3 }, fouten: [{ blok: 'B001', criterium: 'opschoning', fout: 'uhm', correct: '', ernst: 'laag' }], samenvatting: 'Mock-beoordeling.' });
     default:
       return 'mock';
   }

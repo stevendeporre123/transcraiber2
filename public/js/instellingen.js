@@ -2,7 +2,7 @@
 const MODEL_FIELDS = [
   ['model_default', 'Algemeen standaardmodel'], ['model_segmenter', 'Opdelen per agendapunt'], ['model_normalizer', 'Gentse normalizer'], ['model_cleaner', 'Transcript cleaner'],
   ['model_resolver', 'Speaker resolver'], ['model_writer', 'Verslag writer'], ['model_agenda', 'Agenda uitlezen'],
-  ['model_intake', 'LLM-intake'], ['model_assistant', 'Skill-assistent (promptvenster)'],
+  ['model_intake', 'LLM-intake'], ['model_assistant', 'Skill-assistent (promptvenster)'], ['model_judge', 'Kwaliteitsrechter (Testbank)'],
 ];
 
 async function load() {

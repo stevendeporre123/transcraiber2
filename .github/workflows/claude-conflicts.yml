@@ -1,0 +1,55 @@
+# Na elke wijziging op main: Claude zoekt open pull requests met mergeconflicten,
+# merget main in die PR-branch, lost de conflicten op, draait de tests en pusht naar
+# de PR-branch. Mergen naar main blijft altijd manueel.
+# Ook met de hand te starten via Actions > Claude mergeconflicten > Run workflow.
+# Vereist het repository-secret ANTHROPIC_API_KEY.
+name: Claude mergeconflicten
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: claude-conflicts
+  cancel-in-progress: false
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Git-identiteit
+        run: |
+          git config user.name "claude[bot]"
+          git config user.email "claude[bot]@users.noreply.github.com"
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+
+            Taak: houd open pull requests mergebaar met main.
+            1. `gh pr list --state open --json number,headRefName,isCrossRepository,mergeable`.
+               Sla PR's van forks (isCrossRepository) over. Is mergeable UNKNOWN, wacht 20 s en vraag opnieuw.
+            2. Voor elke PR met mergeable == CONFLICTING:
+               - `git fetch origin <branch>` en `git checkout -B <branch> origin/<branch>`
+               - `git merge origin/main --no-edit`
+               - Los elk conflict op zodat de bedoeling van BEIDE kanten behouden blijft
+                 (main bevat al gemergde features; de PR voegt zijn feature toe). Combineer, gooi niets weg.
+               - `npm ci` en `npm test`. Faalt iets door de merge, herstel het.
+               - Lukt dat niet of is een conflict inhoudelijk onduidelijk: `git merge --abort`,
+                 push niets, en zet een PR-opmerking met de conflicterende bestanden en waarom.
+               - Anders: commit de merge en `git push origin <branch>` (nooit naar main, nooit force-push),
+                 en zet een PR-opmerking met wat je per bestand koos en het testresultaat.
+            Schrijf opmerkingen in het Nederlands. Merge nooit een PR.
+          claude_args: |
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(gh pr list:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(git fetch:*),Bash(git checkout:*),Bash(git merge:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin:*),Bash(npm ci),Bash(npm test),Bash(sleep:*)"

@@ -25,6 +25,7 @@
         <li><a class="dropdown-item v-redo" data-steps="intake,agenda,segment" href="#">Alles (intake, agenda, opdelen)</a></li>
       </ul>
     </div>
+    <button class="btn btn-outline-primary" id="v-subs" title="Origineel ondertitelbestand met alle verbeteringen erin"><i class="bi bi-badge-cc"></i> Verbeterde ondertitels</button>
     <button class="btn btn-primary" id="v-run" disabled><i class="bi bi-play-fill"></i> Verwerk geselecteerde punten</button>
   </div>
 
@@ -124,11 +125,50 @@
   </div>
 </div>
 
+<!-- Verbeterde ondertitels -->
+<div class="modal fade" id="m-subs" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title"><i class="bi bi-badge-cc"></i> Verbeterde ondertitels (SRT/VTT)</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <p class="small text-body-secondary">Je krijgt altijd het <b>volledige</b> originele ondertitelbestand terug, met dezelfde tijdcodes.
+          Waar een run de tekst verbeterd heeft, staat de verbeterde tekst; de rest blijft ongewijzigd.
+          Overlappen runs, dan wint een manueel aangepast blok, daarna de nieuwste run.</p>
+        <h6>Origineel ondertitelbestand</h6>
+        <div id="sub-source" class="mb-2"></div>
+        <form id="f-sub-upload" class="input-group input-group-sm mb-3">
+          <input type="file" class="form-control" name="subtitles" accept=".srt,.vtt" required>
+          <button class="btn btn-outline-primary" type="submit"><i class="bi bi-upload"></i> Opladen</button>
+        </form>
+        <h6>Runs die meetellen</h6>
+        <table id="sub-runs" class="table table-sm table-hover w-100">
+          <thead><tr><th></th><th>Run</th><th>Status</th><th>Blokken</th><th>Manueel aangepast</th><th>Gestart</th></tr></thead>
+        </table>
+        <div class="row g-2 align-items-center mt-1">
+          <div class="col-auto">
+            <div class="btn-group btn-group-sm" role="group">
+              <input type="radio" class="btn-check" name="sub-format" id="sub-f-srt" value="srt"><label class="btn btn-outline-secondary" for="sub-f-srt">SRT</label>
+              <input type="radio" class="btn-check" name="sub-format" id="sub-f-vtt" value="vtt"><label class="btn btn-outline-secondary" for="sub-f-vtt">VTT</label>
+            </div>
+          </div>
+          <div class="col-auto"><div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" id="sub-speakers" checked><label class="form-check-label small" for="sub-speakers">Sprekernamen toevoegen</label></div></div>
+        </div>
+        <div id="sub-stats" class="mt-3"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sluiten</button>
+        <a class="btn btn-primary disabled" id="sub-download" href="#"><i class="bi bi-download"></i> Download</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="/vendor/jquery/jquery.min.js"></script>
 <script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="/vendor/datatables/dataTables.min.js"></script>
 <script src="/vendor/datatables-bs5/js/dataTables.bootstrap5.min.js"></script>
 <script src="js/common.js"></script>
 <script src="js/vergadering.js"></script>
+<script src="js/ondertitels.js"></script>
 </body>
 </html>
